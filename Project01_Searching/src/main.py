@@ -45,88 +45,17 @@ Project_DeliverySystem/
 
 """
 
-import pygame
 import sys
-import time
-
-# Constants
-CELL_SIZE = 80
-GRID_COLOR = (200, 200, 200)
-BACKGROUND_COLOR = (255, 255, 255)
-START_COLOR = (0, 255, 0)
-GOAL_COLOR = (255, 0, 0)
-OBSTACLE_COLOR = (0, 0, 0)
-PATH_COLOR = (0, 0, 255)
-TEXT_COLOR = (0, 0, 0)
-FUEL_STATION_COLOR = (255, 255, 0)
-TOLL_ROAD_COLOR = (128, 128, 128)
-
-
-class CityMap:
-    def __init__(self, rows, cols, delivery_time, fuel_capacity, grid):
-        self.rows = rows
-        self.cols = cols
-        self.delivery_time = delivery_time
-        self.fuel_capacity = fuel_capacity
-        self.grid = grid
-
-    @staticmethod
-    def from_file(filepath):
-        with open(filepath, "r") as file:
-            lines = file.readlines()
-            rows, cols, delivery_time, fuel_capacity = map(
-                int, lines[0].strip().split()
-            )
-            grid = [list(map(str, line.strip().split())) for line in lines[1:]]
-            return CityMap(rows, cols, delivery_time, fuel_capacity, grid)
-
-
-def draw_grid(screen, city_map, font):
-    for row in range(city_map.rows):
-        for col in range(city_map.cols):
-            x = col * CELL_SIZE
-            y = row * CELL_SIZE
-            rect = pygame.Rect(x, y, CELL_SIZE, CELL_SIZE)
-            value = city_map.grid[row][col]
-            if value == "0":
-                color = BACKGROUND_COLOR
-            elif value == "-1":
-                color = OBSTACLE_COLOR
-            elif value == "S" or value.startswith("S"):
-                color = START_COLOR
-            elif value == "G" or value.startswith("G"):
-                color = GOAL_COLOR
-            elif value.startswith("F"):
-                color = FUEL_STATION_COLOR
-            else:
-                color = TOLL_ROAD_COLOR
-            pygame.draw.rect(screen, color, rect)
-            pygame.draw.rect(screen, GRID_COLOR, rect, 1)
-            if value not in ["0", "-1"]:
-                text_surface = font.render(value, True, TEXT_COLOR)
-                text_rect = text_surface.get_rect(center=rect.center)
-                screen.blit(text_surface, text_rect)
-
-
-def visualize_path(screen, path, font):
-    for row, col in path:
-        x = col * CELL_SIZE
-        y = row * CELL_SIZE
-        rect = pygame.Rect(x, y, CELL_SIZE, CELL_SIZE)
-        pygame.draw.rect(screen, PATH_COLOR, rect)
-        pygame.draw.rect(screen, GRID_COLOR, rect, 1)
-        text_surface = font.render("P", True, TEXT_COLOR)
-        text_rect = text_surface.get_rect(center=rect.center)
-        screen.blit(text_surface, text_rect)
-        pygame.display.update()
-        time.sleep(0.1)
+from citymap import CityMap
+from simulation.visualizer import draw_grid, visualize_path, CELL_SIZE
+import pygame  # type: ignore
 
 
 def main():
     pygame.init()
-    filepath = "../data/input/input5_level2.txt"  # Change this to your input file
+    filepath = "../data/input/input5_level4.txt"  # Change this to your input file
     city_map = CityMap.from_file(filepath)
-
+    print()
     screen_width = city_map.cols * CELL_SIZE
     screen_height = city_map.rows * CELL_SIZE
     screen = pygame.display.set_mode((screen_width, screen_height))

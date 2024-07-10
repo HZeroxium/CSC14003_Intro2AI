@@ -37,3 +37,21 @@ F1 - fuel station (6, 2), with 1 minute to refuel
 Numbers (1, 4, 5, 8) - indicate the time required to travel between two points
 
 """
+
+# Constants
+
+DIRECTIONS = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+
+
+def reconstruct_path(came_from, start, goal):
+    current = goal
+    path = []
+    while current:
+        path.append(current)
+        current = came_from[current]
+    path.reverse()
+    return path if path[0] == start else []
+
+
+def heuristic(a: tuple, b: tuple) -> int:
+    return abs(a[0] - b[0]) + abs(a[1] - b[1])
