@@ -38,19 +38,29 @@ Numbers (1, 4, 5, 8) - indicate the time required to travel between two points
 
 """
 
+from typing import List, Dict, Tuple
+
 # Constants
 
 DIRECTIONS = [(0, 1), (1, 0), (0, -1), (-1, 0)]
 
 
-def reconstruct_path(came_from, start, goal):
+def reconstruct_path(
+    parent: Dict[Tuple[int, int], Tuple[int, int]],
+    start: Tuple[int, int],
+    goal: Tuple[int, int],
+) -> List[Tuple[int, int]]:
+    path: List[Tuple[int, int]] = []
     current = goal
-    path = []
-    while current:
+
+    while current != start:
         path.append(current)
-        current = came_from[current]
+        current = parent[current]
+
+    path.append(start)
     path.reverse()
-    return path if path[0] == start else []
+
+    return path
 
 
 def heuristic(a: tuple, b: tuple) -> int:

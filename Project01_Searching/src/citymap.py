@@ -164,3 +164,10 @@ class CityMap:
 
     def __str__(self) -> str:
         return f"CityMap({self.rows}, {self.cols}, {self.delivery_time}, {self.fuel_capacity}, {self.start}, {self.goal}, {self.grid})"
+
+    def get_cost(self, current: Tuple[int, int], next: Tuple[int, int]) -> int:
+        current_cell = self.get_cell(current)
+        next_cell = self.get_cell(next)
+        if next_cell.type == CellType.TOLL_ROAD:
+            return next_cell.value
+        return 1
