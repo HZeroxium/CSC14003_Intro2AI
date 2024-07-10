@@ -147,8 +147,10 @@ class CityMap:
             return CityMap(rows, cols, delivery_time, fuel_capacity, grid, start, goal)
 
     def get_cell(self, position: Tuple[int, int]) -> Cell:
-        row, col = position
-        return self.grid[row][col]
+        if (0 <= position[0] < self.rows) and (0 <= position[1] < self.cols):
+            return self.grid[position[0]][position[1]]
+
+        return Cell(-1, -1, CellType.OBSTACLE, -1)
 
     def is_valid_move(self, position: Tuple[int, int]) -> bool:
         cell = self.get_cell(position)
@@ -160,7 +162,7 @@ class CityMap:
         )
 
     def is_goal(self, position: Tuple[int, int]) -> bool:
-        return position == (self.goal.row, self.goal.col)
+        return position == (self.goal[0], self.goal[1])
 
     def __str__(self) -> str:
         return f"CityMap({self.rows}, {self.cols}, {self.delivery_time}, {self.fuel_capacity}, {self.start}, {self.goal}, {self.grid})"

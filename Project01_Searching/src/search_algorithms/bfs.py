@@ -9,7 +9,7 @@ def bfs(city_map: CityMap) -> List[Tuple[int, int]]:
     start, goal = city_map.start, city_map.goal
     frontier = deque([start])
 
-    visited: Set[Tuple[int, int]] = Set()
+    visited: Set[Tuple[int, int]] = set()
     visited.add(start)
     parent: Dict[Tuple[int, int], Tuple[int, int]] = {start: None}
 

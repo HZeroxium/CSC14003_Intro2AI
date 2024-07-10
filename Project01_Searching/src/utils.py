@@ -49,11 +49,18 @@ def reconstruct_path(
     parent: Dict[Tuple[int, int], Tuple[int, int]],
     start: Tuple[int, int],
     goal: Tuple[int, int],
+    debug: bool = False,
 ) -> List[Tuple[int, int]]:
     path: List[Tuple[int, int]] = []
     current = goal
 
+    # Check if goal is unreachable
+    if current not in parent:
+        return []
+
     while current != start:
+        if debug:
+            print("Current:", current)
         path.append(current)
         current = parent[current]
 
@@ -65,3 +72,12 @@ def reconstruct_path(
 
 def heuristic(a: tuple, b: tuple) -> int:
     return abs(a[0] - b[0]) + abs(a[1] - b[1])
+
+
+# Output path example: (1, 1) -> (2, 1) -> (3, 1) -> (4, 1)
+
+
+def format_path(path: List[Tuple[int, int]]) -> str:
+    if not path:
+        return "No path found"
+    return " -> ".join([f"({x}, {y})" for x, y in path])

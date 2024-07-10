@@ -50,12 +50,19 @@ from citymap import CityMap
 from simulation.visualizer import draw_grid, visualize_path, CELL_SIZE
 import pygame  # type: ignore
 
+from search_algorithms import bfs, dfs, ucs, gbfs, a_star
+from utils import format_path
+
 
 def main():
+    # Input file format: input{input}_level{level}.txt
+    input, level = (4, 1)
+    filepath = f"../data/input/input{input}_level{level}.txt"
+
     pygame.init()
-    filepath = "../data/input/input5_level4.txt"  # Change this to your input file
     city_map = CityMap.from_file(filepath)
-    print()
+
+    # Draw the map screen
     screen_width = city_map.cols * CELL_SIZE
     screen_height = city_map.rows * CELL_SIZE
     screen = pygame.display.set_mode((screen_width, screen_height))
@@ -65,8 +72,28 @@ def main():
     draw_grid(screen, city_map, font)
     pygame.display.update()
 
-    path = [(1, 1), (2, 1), (3, 1), (4, 1)]  # Example path
-    # visualize_path(screen, path, font)
+    # Run search algorithm
+    algorithms = {
+        # "BFS": bfs.bfs,
+        # "DFS": dfs.dfs,
+        # "UCS": ucs.ucs,
+        # "GBFS": gbfs.gbfs,
+        # "AStar": a_star.astar,
+    }
+
+    # Run each algorithm and write the output to a file
+
+    for name, algorithm in algorithms.items():
+        path = algorithm(city_map)
+        formatted_path = format_path(path)
+        output_file = f"../data/output/output{input}_level{level}_{name}.txt"
+        with open(output_file, "w") as f:
+            f.write(formatted_path)
+
+        # Visualize the path
+        visualize_path(screen, path, font)
+        pygame.display.update()
+        pygame.time.wait(1000)
 
     running = True
     while running:

@@ -45,14 +45,13 @@ def draw_grid(screen, city_map: CityMap, font):
 
 
 def visualize_path(screen, path, font):
-    for row, col in path:
-        x = col * CELL_SIZE
-        y = row * CELL_SIZE
-        rect = pygame.Rect(x, y, CELL_SIZE, CELL_SIZE)
-        pygame.draw.rect(screen, PATH_COLOR, rect)
-        pygame.draw.rect(screen, GRID_COLOR, rect, 1)
-        text_surface = font.render("P", True, TEXT_COLOR)
-        text_rect = text_surface.get_rect(center=rect.center)
-        screen.blit(text_surface, text_rect)
+    for i in range(len(path) - 1):
+        row1, col1 = path[i]
+        row2, col2 = path[i + 1]
+        x1 = col1 * CELL_SIZE + CELL_SIZE // 2
+        y1 = row1 * CELL_SIZE + CELL_SIZE // 2
+        x2 = col2 * CELL_SIZE + CELL_SIZE // 2
+        y2 = row2 * CELL_SIZE + CELL_SIZE // 2
+        pygame.draw.line(screen, PATH_COLOR, (x1, y1), (x2, y2), 5)
         pygame.display.update()
         time.sleep(0.1)
