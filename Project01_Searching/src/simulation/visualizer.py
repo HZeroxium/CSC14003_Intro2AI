@@ -14,6 +14,13 @@ TEXT_COLOR = (0, 0, 0)
 FUEL_STATION_COLOR = (255, 255, 0)
 TOLL_ROAD_COLOR = (128, 128, 128)
 TEST_COLOR = (255, 0, 255)
+PATH_COLORS = [
+    (0, 128, 255),
+    (128, 255, 0),
+    (255, 0, 128),
+    (255, 255, 128),
+    (128, 255, 128),
+]
 
 
 def draw_grid(screen, city_map: CityMap, font):
@@ -44,7 +51,9 @@ def draw_grid(screen, city_map: CityMap, font):
                 screen.blit(text_surface, text_rect)
 
 
-def visualize_path(screen, path, font):
+def visualize_path(screen, path, color=PATH_COLOR):
+    if not path:
+        return
     for i in range(len(path) - 1):
         row1, col1 = path[i]
         row2, col2 = path[i + 1]
@@ -52,6 +61,6 @@ def visualize_path(screen, path, font):
         y1 = row1 * CELL_SIZE + CELL_SIZE // 2
         x2 = col2 * CELL_SIZE + CELL_SIZE // 2
         y2 = row2 * CELL_SIZE + CELL_SIZE // 2
-        pygame.draw.line(screen, PATH_COLOR, (x1, y1), (x2, y2), 5)
+        pygame.draw.line(screen, color, (x1, y1), (x2, y2), 5)
         pygame.display.update()
         time.sleep(0.1)

@@ -26,7 +26,7 @@ def ucs(city_map: CityMap) -> list[tuple]:
         for direction in DIRECTIONS:
             next_cell = (current[0] + direction[0], current[1] + direction[1])
             if city_map.is_valid_move(next_cell):
-                new_cost = current_cost + city_map.get_cost(current, next_cell)
+                new_cost = current_cost + city_map.get_cost(next_cell)
                 if next_cell not in cost or new_cost < cost[next_cell]:
                     cost[next_cell] = new_cost
                     heapq.heappush(frontier, (new_cost, next_cell))

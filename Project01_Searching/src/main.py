@@ -47,7 +47,7 @@ Project_DeliverySystem/
 
 import sys
 from citymap import CityMap
-from simulation.visualizer import draw_grid, visualize_path, CELL_SIZE
+from simulation.visualizer import draw_grid, visualize_path, CELL_SIZE, PATH_COLORS
 import pygame  # type: ignore
 
 from search_algorithms import bfs, dfs, ucs, gbfs, a_star
@@ -56,7 +56,7 @@ from utils import format_path
 
 def main():
     # Input file format: input{input}_level{level}.txt
-    input, level = (4, 1)
+    input, level = (3, 2)
     filepath = f"../data/input/input{input}_level{level}.txt"
 
     pygame.init()
@@ -78,22 +78,24 @@ def main():
         # "DFS": dfs.dfs,
         # "UCS": ucs.ucs,
         # "GBFS": gbfs.gbfs,
-        # "AStar": a_star.astar,
+        "AStar": a_star.a_star,
     }
 
     # Run each algorithm and write the output to a file
-
+    i = 0
     for name, algorithm in algorithms.items():
-        path = algorithm(city_map)
+        path = algorithm(city_map, level=level)
         formatted_path = format_path(path)
-        output_file = f"../data/output/output{input}_level{level}_{name}.txt"
+        # output_file = f"../data/output/output{input}_level{level}_{name}.txt"
+        output_file = f"../data/output/output{input}_level{level}.txt"
         with open(output_file, "w") as f:
             f.write(formatted_path)
 
         # Visualize the path
-        visualize_path(screen, path, font)
+        visualize_path(screen, path, PATH_COLORS[i])
         pygame.display.update()
         pygame.time.wait(1000)
+        i += 1
 
     running = True
     while running:
