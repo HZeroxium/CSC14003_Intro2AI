@@ -100,6 +100,7 @@ class CityMap:
         self.grid = grid
         self.start = start
         self.goal = goal
+        self.fuel = fuel_capacity  # Initialize with full fuel tank
 
     @staticmethod
     def from_file(filepath: str) -> "CityMap":
@@ -159,6 +160,7 @@ class CityMap:
             0 <= position[0] < self.rows
             and 0 <= position[1] < self.cols
             and cell.type != CellType.OBSTACLE
+            and self.fuel > 0
         )
 
     def is_goal(self, position: Tuple[int, int]) -> bool:
@@ -171,4 +173,9 @@ class CityMap:
         next_cell = self.get_cell(next)
         if next_cell.type == CellType.TOLL_ROAD:
             return next_cell.value + 1
+        if next_cell.type == CellType.FUEL_STATION:
+            return next_cell.value + 1
         return 1
+
+    def refuel(self):
+        self.fuel = self.fuel_capacity

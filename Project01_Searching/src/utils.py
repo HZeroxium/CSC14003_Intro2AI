@@ -39,6 +39,7 @@ Numbers (1, 4, 5, 8) - indicate the time required to travel between two points
 """
 
 from typing import List, Dict, Tuple
+from citymap import CityMap, CellType
 
 # Constants
 
@@ -81,3 +82,23 @@ def format_path(path: List[Tuple[int, int]]) -> str:
     if not path:
         return "No path found"
     return " -> ".join([f"({x}, {y})" for x, y in path])
+
+
+def heuristic_2(
+    a: Tuple[int, int], b: Tuple[int, int], city_map: CityMap, current_fuel: int
+) -> int:
+    h = abs(a[0] - b[0]) + abs(a[1] - b[1])
+
+    if current_fuel < h:
+        # Penalize paths with low fuel
+        min_fuel_station_dist = float("inf")
+        for i in range(city_map.rows):
+            for j in range(city_map.cols):
+                if city_map.get_cell((i, j)).type == CellType.FUEL_STATION:
+                    dist_to_fuel_station = abs(a[0] - i) + abs(a[1] - j)
+                    min_fuel_station_dist = min(
+                        min_fuel_station_dist, dist_to_fuel_station
+                    )
+        h += min_fuel_station_dist * 2  # Penalize distance to the nearest fuel station
+
+    return h

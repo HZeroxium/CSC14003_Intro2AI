@@ -56,7 +56,7 @@ from utils import format_path
 
 def main():
     # Input file format: input{input}_level{level}.txt
-    input, level = (3, 2)
+    input, level = (5, 3)
     filepath = f"../data/input/input{input}_level{level}.txt"
 
     pygame.init()
@@ -78,7 +78,7 @@ def main():
         # "DFS": dfs.dfs,
         # "UCS": ucs.ucs,
         # "GBFS": gbfs.gbfs,
-        "AStar": a_star.a_star,
+        "AStar": a_star.a_star if level <= 2 else a_star.a_star_2,
     }
 
     # Run each algorithm and write the output to a file
