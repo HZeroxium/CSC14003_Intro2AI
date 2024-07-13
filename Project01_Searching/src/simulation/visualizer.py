@@ -1,6 +1,8 @@
-import pygame
+import pygame  # type: ignore
 import time
 from citymap import CityMap, CellType
+from typing import List, Tuple, Dict
+from simulation.multiple_agents import Agent
 
 # Constants
 CELL_SIZE = 80
@@ -20,7 +22,14 @@ PATH_COLORS = [
     (255, 0, 128),
     (255, 255, 128),
     (128, 255, 128),
+    (255, 128, 128),
+    (128, 128, 255),
+    (255, 128, 0),
+    (128, 0, 255),
 ]
+
+
+CONFLICT_SYMBOL = "X"
 
 
 def draw_grid(screen, city_map: CityMap, font):
@@ -64,3 +73,63 @@ def visualize_path(screen, path, color=PATH_COLOR):
         pygame.draw.line(screen, color, (x1, y1), (x2, y2), 5)
         pygame.display.update()
         time.sleep(0.1)
+
+
+# Visualize multiple paths (step by step), if 2 agents have the same
+# If two agents have the same destination cell on their path at a certain step, only the first agent's path is printed; the agents' paths are printed at the following steps.
+
+CONFLICT_COLOR = (255, 0, 0)
+
+
+def visualize_multi_path(screen, paths: Dict["Agent", List[Tuple[int, int]]]):
+    max_steps = max(len(path) for path in paths.values())
+    agent_colors = {
+        agent: PATH_COLORS[i % len(PATH_COLORS)] for i, agent in enumerate(paths)
+    }
+
+    conflict_marker = {}  # Keeps track of conflicts for display
+
+    for step in range(max_steps):
+        current_positions = {}
+
+        for agent, path in paths.items():
+            if step < len(path):
+                pos = path[step]
+                if pos in current_positions:
+                    # Conflict found, agent has to wait
+                    conflict_marker[pos] = True
+                else:
+                    current_positions[pos] = agent
+                    conflict_marker[pos] = False
+
+        for pos, agent in current_positions.items():
+            if conflict_marker[pos]:
+                # Draw conflict marker
+                row, col = pos
+                x = col * CELL_SIZE + CELL_SIZE // 2
+                y = row * CELL_SIZE + CELL_SIZE // 2
+                pygame.draw.circle(screen, CONFLICT_COLOR, (x, y), CELL_SIZE // 4)
+            else:
+                # Draw agent path
+                if step > 0:
+                    prev_pos = paths[agent][step - 1]
+                    pygame.draw.line(
+                        screen,
+                        agent_colors[agent],
+                        (
+                            prev_pos[1] * CELL_SIZE + CELL_SIZE // 2,
+                            prev_pos[0] * CELL_SIZE + CELL_SIZE // 2,
+                        ),
+                        (
+                            pos[1] * CELL_SIZE + CELL_SIZE // 2,
+                            pos[0] * CELL_SIZE + CELL_SIZE // 2,
+                        ),
+                        5,
+                    )
+
+        pygame.display.update()
+        time.sleep(1)
+
+    # Finally, draw the full paths without conflicts
+    for agent, path in paths.items():
+        visualize_path(screen, path, agent_colors[agent])
