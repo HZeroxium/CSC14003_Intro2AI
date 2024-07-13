@@ -39,7 +39,7 @@ Numbers (1, 4, 5, 8) - indicate the time required to travel between two points
 # Define enum for cell types
 
 from enum import Enum
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Dict
 
 
 class CellType(Enum):
@@ -92,6 +92,8 @@ class CityMap:
         grid: List[List["Cell"]],
         start: Tuple[int, int],
         goal: Tuple[int, int],
+        start_points: Dict[int, Tuple[int, int]],
+        goal_points: Dict[int, Tuple[int, int]],
     ):
         self.rows = rows
         self.cols = cols
@@ -101,6 +103,8 @@ class CityMap:
         self.start = start
         self.goal = goal
         self.fuel = fuel_capacity  # Initialize with full fuel tank
+        self.start_points = start_points
+        self.goal_points = goal_points
 
     @staticmethod
     def from_file(filepath: str) -> "CityMap":
@@ -113,6 +117,8 @@ class CityMap:
             start: Tuple[int, int] = None
             goal: Tuple[int, int] = None
             grid = []
+            start_points: Dict[int, Tuple[int, int]] = {}
+            goal_points: Dict[int, Tuple[int, int]] = {}
             for i in range(rows):
                 row = []
                 for j in range(cols):
@@ -122,14 +128,18 @@ class CityMap:
                         cell_type = CellType.START
                         if temp_grid[i][j] == "S":
                             start = (i, j)
+                            start_points[0] = (i, j)
                         else:
                             cell_value = int(temp_grid[i][j][1:])
+                            start_points[cell_value] = (i, j)
                     elif temp_grid[i][j].startswith("G"):
                         cell_type = CellType.GOAL
                         if temp_grid[i][j] == "G":
                             goal = (i, j)
+                            goal_points[0] = (i, j)
                         else:
                             cell_value = int(temp_grid[i][j][1:])
+                            goal_points[cell_value] = (i, j)
                     elif temp_grid[i][j].startswith("F"):
                         # Format: F{value}: F12, F4, ...
                         cell_type = CellType.FUEL_STATION
@@ -145,7 +155,17 @@ class CityMap:
                     row.append(Cell(i, j, cell_type, cell_value))
                 grid.append(row)
             # print(grid)
-            return CityMap(rows, cols, delivery_time, fuel_capacity, grid, start, goal)
+            return CityMap(
+                rows,
+                cols,
+                delivery_time,
+                fuel_capacity,
+                grid,
+                start,
+                goal,
+                start_points,
+                goal_points,
+            )
 
     def get_cell(self, position: Tuple[int, int]) -> Cell:
         if (0 <= position[0] < self.rows) and (0 <= position[1] < self.cols):
@@ -165,6 +185,11 @@ class CityMap:
 
     def is_goal(self, position: Tuple[int, int]) -> bool:
         return position == (self.goal[0], self.goal[1])
+
+    def is_goal_multi_agents(
+        self, position: Tuple[int, int], goal: Tuple[int, int]
+    ) -> bool:
+        return position == (goal[0], goal[1])
 
     def __str__(self) -> str:
         return f"CityMap({self.rows}, {self.cols}, {self.delivery_time}, {self.fuel_capacity}, {self.start}, {self.goal}, {self.grid})"

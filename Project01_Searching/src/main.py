@@ -47,16 +47,29 @@ Project_DeliverySystem/
 
 import sys
 from citymap import CityMap
-from simulation.visualizer import draw_grid, visualize_path, CELL_SIZE, PATH_COLORS
+from simulation.visualizer import (
+    draw_grid,
+    visualize_path,
+    CELL_SIZE,
+    PATH_COLORS,
+    visualize_multi_path,
+)
 import pygame  # type: ignore
 
 from search_algorithms import bfs, dfs, ucs, gbfs, a_star
 from utils import format_path
+from simulation.multiple_agents import (
+    # a_star_multi_agent,
+    Agent,
+    get_agents,
+    a_star_multi_agent_optimized,
+    a_star_multi_agent,
+)
 
 
 def main():
     # Input file format: input{input}_level{level}.txt
-    input, level = (5, 3)
+    input, level = (4, 3)
     filepath = f"../data/input/input{input}_level{level}.txt"
 
     pygame.init()
@@ -107,5 +120,44 @@ def main():
     sys.exit()
 
 
+def multi_agent():
+    input, level = (5, 4)
+    filepath = f"../data/input/input{input}_level{level}.txt"
+
+    pygame.init()
+    city_map = CityMap.from_file(filepath)
+
+    # Draw the map screen
+    screen_width = city_map.cols * CELL_SIZE
+    screen_height = city_map.rows * CELL_SIZE
+    screen = pygame.display.set_mode((screen_width, screen_height))
+    pygame.display.set_caption("Search Algorithm Visualization")
+
+    font = pygame.font.SysFont(None, 24)
+    draw_grid(screen, city_map, font)
+    pygame.display.update()
+
+    # Run multi-agent search algorithm
+    agents = get_agents(city_map)
+    paths = a_star_multi_agent(city_map, agents)
+
+    # Print the paths of each agent
+    for agent, path in paths.items():
+        print(f"Agent {agent}: {path}")
+
+    # Visualize the paths
+    visualize_multi_path(screen, paths)
+
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+    pygame.quit()
+    sys.exit()
+
+
 if __name__ == "__main__":
-    main()
+    # main()
+    multi_agent()
