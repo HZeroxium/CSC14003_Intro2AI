@@ -45,6 +45,7 @@ Project_DeliverySystem/
 
 """
 
+import os
 import sys
 from citymap import CityMap
 from simulation.visualizer import (
