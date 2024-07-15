@@ -45,6 +45,7 @@ Project_DeliverySystem/
 
 """
 
+import os
 import sys
 from citymap import CityMap
 from simulation.visualizer import (
@@ -122,7 +123,10 @@ def main():
 
 def multi_agent():
     input, level = (5, 4)
-    filepath = f"../data/input/input{input}_level{level}.txt"
+    # filepath = f"../data/input/input{input}_level{level}.txt"
+
+    # Run the script from the project root
+    filepath =  os.path.join(os.path.dirname(__file__), f'../data/input/input{input}_level{level}.txt')
 
     pygame.init()
     city_map = CityMap.from_file(filepath)
