@@ -5,8 +5,9 @@ from utils import reconstruct_path, DIRECTIONS
 from typing import Dict, Tuple, List, Set
 
 
-def bfs(city_map: CityMap) -> List[Tuple[int, int]]:
-    start, goal = city_map.start, city_map.goal
+def bfs(
+    city_map: CityMap, start: Tuple[int, int], goal: Tuple[int, int], level: int = 1
+) -> List[Tuple[int, int]]:
     frontier = deque([start])
 
     visited: Set[Tuple[int, int]] = set()

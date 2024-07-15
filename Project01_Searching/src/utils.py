@@ -71,10 +71,6 @@ def reconstruct_path(
     return path
 
 
-def heuristic(a: tuple, b: tuple) -> int:
-    return abs(a[0] - b[0]) + abs(a[1] - b[1])
-
-
 # Output path example: (1, 1) -> (2, 1) -> (3, 1) -> (4, 1)
 
 
@@ -84,10 +80,17 @@ def format_path(path: List[Tuple[int, int]]) -> str:
     return " -> ".join([f"({x}, {y})" for x, y in path])
 
 
-def heuristic_2(
-    a: Tuple[int, int], b: Tuple[int, int], city_map: CityMap, current_fuel: int
+def heuristic(
+    a: Tuple[int, int],
+    b: Tuple[int, int],
+    city_map: CityMap,
+    level: int = 1,
+    current_fuel: int = 0,
 ) -> int:
     h = abs(a[0] - b[0]) + abs(a[1] - b[1])
+
+    if level <= 2:
+        return h
 
     if current_fuel < h:
         # Penalize paths with low fuel

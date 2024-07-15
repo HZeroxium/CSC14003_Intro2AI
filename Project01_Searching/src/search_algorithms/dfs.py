@@ -3,9 +3,9 @@ from utils import reconstruct_path, DIRECTIONS
 from typing import Dict, Set, List, Tuple
 
 
-def dfs(city_map: CityMap) -> List[Tuple[int, int]]:
-    start: Tuple[int, int] = city_map.start
-    goal: Tuple[int, int] = city_map.goal
+def dfs(
+    city_map: CityMap, start: Tuple[int, int], goal: Tuple[int, int], level: int = 1
+) -> List[Tuple[int, int]]:
     stack: List[Tuple[int, int]] = [start]
     parent: Dict[Tuple[int, int], Tuple[int, int]] = {start: None}
     visited: Set[Tuple[int, int]] = set()

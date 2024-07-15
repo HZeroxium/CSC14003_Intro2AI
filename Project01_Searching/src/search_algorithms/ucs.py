@@ -4,9 +4,9 @@ import heapq
 from typing import Dict, Set, List, Tuple
 
 
-def ucs(city_map: CityMap) -> list[tuple]:
-    start: Tuple[int, int] = city_map.start
-    goal: Tuple[int, int] = city_map.goal
+def ucs(
+    city_map: CityMap, start: Tuple[int, int], goal: Tuple[int, int], leveL: int = 1
+) -> list[tuple]:
     frontier: List[Tuple[int, Tuple[int, int]]] = [(0, start)]
     visited: Set[Tuple[int, int]] = set()
     parent: Dict[Tuple[int, int], Tuple[int, int]] = {start: None}
