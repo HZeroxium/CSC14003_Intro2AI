@@ -67,22 +67,7 @@ from simulation.multiple_agents import (
 )
 
 
-def single_agent(input: int = 1, level: int = 1):
-    filepath = f"../data/input/input{input}_level{level}.txt"
-
-    pygame.init()
-    city_map = CityMap.from_file(filepath)
-
-    # Draw the map screen
-    screen_width = city_map.cols * CELL_SIZE
-    screen_height = city_map.rows * CELL_SIZE
-    screen = pygame.display.set_mode((screen_width, screen_height))
-    pygame.display.set_caption("Search Algorithm Visualization")
-
-    font = pygame.font.SysFont(None, 24)
-    draw_grid(screen, city_map, font)
-    pygame.display.update()
-
+def single_agent(screen, city_map: CityMap, output: str, level: int = 1):
     # Run search algorithm
     algorithms = {
         1: {
@@ -117,9 +102,6 @@ def single_agent(input: int = 1, level: int = 1):
         i += 1
         paths[name] = path
 
-    # Write to file
-    output = f"../data/output/output{input}_level{level}.txt"
-
     with open(output, "w") as f:
         for name, path in paths.items():
             f.write(f"{name}: {format_path(path)}\n")
@@ -135,41 +117,19 @@ def single_agent(input: int = 1, level: int = 1):
     sys.exit()
 
 
-def multiple_agent(input: int = 1):
-    filepath = f"../data/input/input{input}_level4.txt"
-
-    pygame.init()
-    city_map = CityMap.from_file(filepath)
-
-    # Draw the map screen
-    screen_width = city_map.cols * CELL_SIZE
-    screen_height = city_map.rows * CELL_SIZE
-    screen = pygame.display.set_mode((screen_width, screen_height))
-    pygame.display.set_caption("Search Algorithm Visualization")
-
-    font = pygame.font.SysFont(None, 24)
-    draw_grid(screen, city_map, font)
-    pygame.display.update()
-
+def multiple_agent(screen, city_map: CityMap, output: str):
     # Run multi-agent search algorithm
     agents = get_agents(city_map)
     paths = a_star_multi_agent(city_map, agents)
 
-    # Print the paths of each agent
-    for agent, path in paths.items():
-        print(f"Agent {agent}: {path}")
-
     # Visualize the paths
     visualize_multi_path(screen, city_map, paths)
-    # pygame.display.update()
 
     # Write to file
-    # output = f"../data/output/output{input}_level4.txt"
-
-    # with open(output, "w") as f:
-    #     for agent, path in paths.items():
-    #         f.write(f"{agent}: {format_path(path)}\n")
-    #         f.write("Path length: {}\n".format(len(path)))
+    with open(output, "w") as f:
+        for agent, path in paths.items():
+            f.write(f"{agent}: {format_path(path)}\n")
+            f.write("Path length: {}\n".format(len(path)))
 
     running = True
     while running:
@@ -184,12 +144,29 @@ def multiple_agent(input: int = 1):
 def main():
     # level: int = int(input("Enter level (1-4): "))
     # input_num: int = int(input("Enter input number (1-5): "))
-    level, input_num = 4, 4
+    level, input_num = 4, 5
+
+    filepath = f"../data/input/input{input_num}_level{level}.txt"
+
+    pygame.init()
+    city_map = CityMap.from_file(filepath)
+
+    # Draw the map screen
+    screen_width = city_map.cols * CELL_SIZE
+    screen_height = city_map.rows * CELL_SIZE
+    screen = pygame.display.set_mode((screen_width, screen_height))
+    pygame.display.set_caption("Search Algorithm Visualization")
+
+    font = pygame.font.SysFont(None, 24)
+    draw_grid(screen, city_map, font)
+    pygame.display.update()
+
+    output = f"../data/output/output{input_num}_level{level}.txt"
 
     if level >= 1 and level <= 3:
-        single_agent(input_num, level)
+        single_agent(screen, city_map, output, level)
     else:
-        multiple_agent(input_num)
+        multiple_agent(screen, city_map, output)
 
 
 if __name__ == "__main__":
