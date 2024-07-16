@@ -1,6 +1,8 @@
 from citymap import CityMap, Cell, CellType
 from typing import Dict, List, Tuple
 from search_algorithms.a_star import a_star
+import heapq
+from utils import DIRECTIONS, heuristic
 
 
 class Agent:
@@ -22,123 +24,111 @@ def get_agents(city_map: CityMap) -> List[Agent]:
     return agents
 
 
+# def a_star_multi_agent(
+#     city_map: CityMap, agents: List[Agent]
+# ) -> Dict[Agent, List[Tuple[int, int]]]:
+#     paths: Dict[Agent, List[Tuple[int, int]]] = {agent: [] for agent in agents}
+
+#     for agent in agents:
+#         path = a_star(
+#             city_map, level=3, multi_agent=True, start=agent.start, goal=agent.goal
+#         )
+#         paths[agent] = path
+
+#     return paths
+
+
+def joint_heuristic(
+    positions: List[Tuple[int, int]], goals: List[Tuple[int, int]], city_map: CityMap
+) -> int:
+    return sum(heuristic(pos, goal, city_map) for pos, goal in zip(positions, goals))
+
+
+def reconstruct_joint_path(
+    parents: Dict[Tuple, Tuple], current: Tuple, city_map: CityMap
+) -> Dict[int, List[Tuple[int, int]]]:
+    path = {}
+    while current in parents:
+        prev = parents[current]
+        for i, (cur_pos, prev_pos) in enumerate(zip(current, prev)):
+            if i not in path:
+                path[i] = []
+            path[i].append(cur_pos)
+        current = prev
+    for i in path:
+        # Append start position to the path
+        path[i].append(city_map.start_points[i])
+        path[i].reverse()
+    return path
+
+
 def a_star_multi_agent(
     city_map: CityMap, agents: List[Agent]
 ) -> Dict[Agent, List[Tuple[int, int]]]:
-    paths: Dict[Agent, List[Tuple[int, int]]] = {agent: [] for agent in agents}
+    start_positions = [agent.start for agent in agents]
+    goal_positions = [agent.goal for agent in agents]
+    initial_fuel = [city_map.fuel_capacity for i in range(len(agents))]
 
-    # Create a copy of the city map to avoid modifying the original map
-    # city_map_temp: CityMap = city_map
-
-    # block_cell = Cell(-1, -1, CellType.OBSTACLE, -1)
-
-    for agent in agents:
-        path = a_star(
-            city_map, level=3, multi_agent=True, start=agent.start, goal=agent.goal
+    open_set = [(0, tuple(start_positions), tuple(initial_fuel))]
+    g_cost = {tuple(start_positions): 0}
+    f_cost = {
+        tuple(start_positions): joint_heuristic(
+            start_positions, goal_positions, city_map
         )
-        paths[agent] = path
-        # Mark the path of the current agent as blocked
+    }
+    parents = {}
+    visited = set()
 
-        # for step, position in enumerate(path):
-        #     city_map_temp.set_cell(position, block_cell)
+    while open_set:
+        _, current_positions, current_fuel = heapq.heappop(open_set)
 
-    return paths
+        if current_positions in visited:
+            continue
 
+        visited.add(current_positions)
 
-# def a_star_multi_agent_optimized(
-#     city_map: CityMap, agents: List[Agent]
-# ) -> Dict[Agent, List[Tuple[int, int]]]:
-#     block_cells: Dict[int, Dict[int, Set[Tuple[int, int]]]] = {
-#         i: {} for i in range(len(agents))
-#     }
-#     paths: Dict[Agent, List[Tuple[int, int]]] = {agent: [] for agent in agents}
-#     open_sets: List[List[Tuple[int, Tuple[int, int], int]]] = [[] for _ in agents]
-#     parents: List[Dict[Tuple[int, int], Tuple[int, int]]] = [{} for _ in agents]
-#     g_scores: List[Dict[Tuple[int, int], int]] = [{agent.start: 0} for agent in agents]
-#     f_scores: List[Dict[Tuple[int, int], int]] = [
-#         {agent.start: heuristic_2(agent.start, agent.goal, city_map, agent.fuel)}
-#         for agent in agents
-#     ]
+        if current_positions == tuple(goal_positions):
+            return reconstruct_joint_path(parents, current_positions, city_map=city_map)
 
-#     for i, agent in enumerate(agents):
-#         heapq.heappush(
-#             open_sets[i], (f_scores[i][agent.start], agent.start, agent.fuel)
-#         )
+        for agent_index, current_pos in enumerate(current_positions):
+            if current_fuel[agent_index] <= 0:
+                continue
 
-#     while any(open_sets):
-#         next_positions = []
-#         for agent_index, agent in enumerate(agents):
-#             if not open_sets[agent_index]:
-#                 continue
+            for direction in DIRECTIONS:
+                next_pos = (
+                    current_pos[0] + direction[0],
+                    current_pos[1] + direction[1],
+                )
 
-#             _, current, current_fuel = heapq.heappop(open_sets[agent_index])
-#             next_positions.append((agent_index, current, current_fuel))
+                if not city_map.is_valid_move(next_pos):
+                    continue
 
-#         # Ensure no two agents move to the same cell at the same step
-#         unique_positions = set()
-#         for agent_index, current, current_fuel in next_positions:
-#             if city_map.is_goal(current):
-#                 path = reconstruct_path(
-#                     parents[agent_index],
-#                     agents[agent_index].start,
-#                     agents[agent_index].goal,
-#                 )
-#                 paths[agents[agent_index]] = path
-#                 for step in range(len(path)):
-#                     if step in block_cells[agent_index]:
-#                         block_cells[agent_index][step].add(path[step])
-#                     else:
-#                         block_cells[agent_index][step] = {path[step]}
-#                 continue
+                next_positions = list(current_positions)
+                next_positions[agent_index] = next_pos
+                next_positions = tuple(next_positions)
 
-#             for direction in DIRECTIONS:
-#                 next_cell = (current[0] + direction[0], current[1] + direction[1])
-#                 if city_map.is_valid_move(next_cell):
-#                     next_fuel = current_fuel - 1
-#                     if next_fuel < 0:
-#                         continue  # Not enough fuel to move to the next cell
+                next_fuel = list(current_fuel)
+                next_fuel[agent_index] -= 1
 
-#                     tentative_g_score = g_scores[agent_index][
-#                         current
-#                     ] + city_map.get_cost(next_cell)
-#                     if city_map.get_cell(next_cell).type == CellType.FUEL_STATION:
-#                         next_fuel = city_map.fuel_capacity
+                if city_map.get_cell(next_pos).type == CellType.FUEL_STATION:
+                    next_fuel[agent_index] = city_map.fuel_capacity
 
-#                     if (
-#                         next_cell not in g_scores[agent_index]
-#                         or tentative_g_score < g_scores[agent_index][next_cell]
-#                     ) and (next_cell not in unique_positions):
-#                         g_scores[agent_index][next_cell] = tentative_g_score
-#                         f_scores[agent_index][next_cell] = (
-#                             tentative_g_score
-#                             + heuristic_2(
-#                                 next_cell, agents[agent_index].goal, city_map, next_fuel
-#                             )
-#                         )
-#                         heapq.heappush(
-#                             open_sets[agent_index],
-#                             (f_scores[agent_index][next_cell], next_cell, next_fuel),
-#                         )
-#                         parents[agent_index][next_cell] = current
-#                         unique_positions.add(next_cell)
+                tentative_g_cost = g_cost[current_positions] + city_map.get_cost(
+                    next_pos
+                )
 
-#         # Mark the path of the current step for all agents
-#         for step in range(
-#             max(len(block_cells[agent_index]) for agent_index in range(len(agents)))
-#         ):
-#             blocked_positions = set()
-#             for agent_index in range(len(agents)):
-#                 if step < len(block_cells[agent_index]):
-#                     blocked_positions.update(block_cells[agent_index][step])
+                if (
+                    next_positions not in g_cost
+                    or tentative_g_cost < g_cost[next_positions]
+                ):
+                    g_cost[next_positions] = tentative_g_cost
+                    f_cost[next_positions] = tentative_g_cost + joint_heuristic(
+                        next_positions, goal_positions, city_map
+                    )
+                    heapq.heappush(
+                        open_set,
+                        (f_cost[next_positions], next_positions, tuple(next_fuel)),
+                    )
+                    parents[next_positions] = current_positions
 
-#             for agent_index in range(len(agents)):
-#                 if step in block_cells[agent_index]:
-#                     block_cells[agent_index][step].update(blocked_positions)
-#                 else:
-#                     block_cells[agent_index][step] = blocked_positions.copy()
-
-#         # Print the content of block_cells at each step for debugging
-#         for agent_index in range(len(agents)):
-#             print(f"Agent {agent_index} block_cells: {block_cells[agent_index]}")
-
-#     return paths
+    return {}
