@@ -16,7 +16,7 @@ from simulation.multiple_agents import (
 from simulation.test import cbs_multiple_agent
 
 # Constants
-CELL_SIZE = 80
+CELL_SIZE = 60
 GRID_COLOR = (200, 200, 200)
 BACKGROUND_COLOR = (255, 255, 255)
 START_COLOR = (0, 255, 0)
