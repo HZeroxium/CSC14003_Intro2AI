@@ -9,8 +9,11 @@ from search_algorithms import bfs, dfs, ucs, gbfs, a_star
 from utils import format_path
 from simulation.multiple_agents import (
     get_agents,
-    a_star_multi_agent,
+    simple_a_star_multi_agent,
+    complex_a_star_multi_agent,
 )
+
+from simulation.test import cbs_multiple_agent
 
 # Constants
 CELL_SIZE = 80
@@ -113,7 +116,15 @@ def single_agent(screen, city_map: CityMap, output: str, level: int = 1):
 
 def multiple_agent(screen, city_map: CityMap, output: str):
     agents = get_agents(city_map)
-    paths = a_star_multi_agent(city_map, agents)
+    # paths = a_star_multi_agent(city_map, agents)
+
+    algorithms = {
+        "Simple A*": simple_a_star_multi_agent,
+        "Complex A*": complex_a_star_multi_agent,
+        "CBS": cbs_multiple_agent,
+    }
+    algorithm = algorithms["CBS"]
+    paths = algorithm(city_map, agents)
     visualize_multi_path(screen, city_map, paths)
 
     with open(output, "w") as f:

@@ -6,13 +6,25 @@ from utils import DIRECTIONS, heuristic
 
 
 class Agent:
-    def __init__(self, start: Tuple[int, int], goal: Tuple[int, int]):
+    def __init__(self, id: int, start: Tuple[int, int], goal: Tuple[int, int]):
+        self.id = id
         self.start = start
         self.goal = goal
-        self.current_position = start
+        self.path = []
 
     def __str__(self):
         return f"Agent: {self.start} -> {self.goal}"
+
+    def __eq__(self, other):
+        return (
+            isinstance(other, Agent)
+            and self.id == other.id
+            and self.start == other.start
+            and self.goal == other.goal
+        )
+
+    def __hash__(self):
+        return hash((self.id, self.start, self.goal))
 
 
 def get_agents(city_map: CityMap) -> List[Agent]:
@@ -20,22 +32,23 @@ def get_agents(city_map: CityMap) -> List[Agent]:
     for i in range(len(city_map.start_points)):
         start = city_map.start_points[i]
         goal = city_map.goal_points[i]
-        agents.append(Agent(start, goal))
+
+        agents.append(Agent(i, start, goal))
     return agents
 
 
-# def a_star_multi_agent(
-#     city_map: CityMap, agents: List[Agent]
-# ) -> Dict[Agent, List[Tuple[int, int]]]:
-#     paths: Dict[Agent, List[Tuple[int, int]]] = {agent: [] for agent in agents}
+def simple_a_star_multi_agent(
+    city_map: CityMap, agents: List[Agent]
+) -> Dict[Agent, List[Tuple[int, int]]]:
+    paths: Dict[Agent, List[Tuple[int, int]]] = {agent: [] for agent in agents}
 
-#     for agent in agents:
-#         path = a_star(
-#             city_map, level=3, multi_agent=True, start=agent.start, goal=agent.goal
-#         )
-#         paths[agent] = path
+    for agent in agents:
+        path = a_star(
+            city_map, level=3, multi_agent=True, start=agent.start, goal=agent.goal
+        )
+        paths[agent] = path
 
-#     return paths
+    return paths
 
 
 def joint_heuristic(
@@ -62,7 +75,7 @@ def reconstruct_joint_path(
     return path
 
 
-def a_star_multi_agent(
+def complex_a_star_multi_agent(
     city_map: CityMap, agents: List[Agent]
 ) -> Dict[Agent, List[Tuple[int, int]]]:
     start_positions = [agent.start for agent in agents]
