@@ -1,1 +1,2 @@
-Hello from output5_level3.txt
+AStar: No path found
+Path length: 0

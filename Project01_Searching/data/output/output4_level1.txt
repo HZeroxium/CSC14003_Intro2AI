@@ -1,1 +1,10 @@
-Hello from output4_level1.txt
+BFS: No path found
+Path length: 0
+DFS: No path found
+Path length: 0
+UCS: No path found
+Path length: 0
+GBFS: No path found
+Path length: 0
+AStar: No path found
+Path length: 0
