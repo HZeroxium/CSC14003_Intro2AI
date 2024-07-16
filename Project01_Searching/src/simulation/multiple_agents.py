@@ -1,4 +1,4 @@
-from citymap import CityMap
+from citymap import CityMap, Cell, CellType
 from typing import Dict, List, Tuple
 from search_algorithms.a_star import a_star
 
@@ -27,11 +27,20 @@ def a_star_multi_agent(
 ) -> Dict[Agent, List[Tuple[int, int]]]:
     paths: Dict[Agent, List[Tuple[int, int]]] = {agent: [] for agent in agents}
 
+    # Create a copy of the city map to avoid modifying the original map
+    # city_map_temp: CityMap = city_map
+
+    # block_cell = Cell(-1, -1, CellType.OBSTACLE, -1)
+
     for agent in agents:
         path = a_star(
             city_map, level=3, multi_agent=True, start=agent.start, goal=agent.goal
         )
         paths[agent] = path
+        # Mark the path of the current agent as blocked
+
+        # for step, position in enumerate(path):
+        #     city_map_temp.set_cell(position, block_cell)
 
     return paths
 

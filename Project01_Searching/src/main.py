@@ -67,9 +67,7 @@ from simulation.multiple_agents import (
 )
 
 
-def main():
-    # Input file format: input{input}_level{level}.txt
-    input, level = (2, 2)
+def single_agent(input: int = 1, level: int = 1):
     filepath = f"../data/input/input{input}_level{level}.txt"
 
     pygame.init()
@@ -100,9 +98,6 @@ def main():
         3: {
             "AStar": a_star.a_star,
         },
-        4: {
-            "AStar": a_star.a_star,
-        },
     }
 
     # Run each algorithm and write the output to a file
@@ -111,9 +106,12 @@ def main():
     start = city_map.start
     goal = city_map.goal
     for name, algorithm in algorithms[level].items():
-        path = algorithm(city_map, start, goal, level)
+        if level == 1:
+            path = algorithm(city_map, start, goal)
+        if level <= 3:
+            path = algorithm(city_map, start, goal, level)
         # Visualize the path
-        visualize_path(screen, path, PATH_COLORS[i])
+        visualize_path(screen, city_map, path, PATH_COLORS[i])
         pygame.display.update()
         pygame.time.wait(1000)
         i += 1
@@ -137,9 +135,8 @@ def main():
     sys.exit()
 
 
-def multi_agent():
-    input, level = (2, 4)
-    filepath = f"../data/input/input{input}_level{level}.txt"
+def multiple_agent(input: int = 1):
+    filepath = f"../data/input/input{input}_level4.txt"
 
     pygame.init()
     city_map = CityMap.from_file(filepath)
@@ -163,16 +160,17 @@ def multi_agent():
         print(f"Agent {agent}: {path}")
 
     # Visualize the paths
-    visualize_multi_path(screen, paths)
-    pygame.display.update()
+    visualize_multi_path(screen, city_map, paths)
+    # pygame.display.update()
 
     # Write to file
-    output = f"../data/output/output{input}_level{level}.txt"
+    # output = f"../data/output/output{input}_level4.txt"
 
-    with open(output, "w") as f:
-        for agent, path in paths.items():
-            f.write(f"{agent}: {format_path(path)}\n")
-            f.write("Path length: {}\n".format(len(path)))
+    # with open(output, "w") as f:
+    #     for agent, path in paths.items():
+    #         f.write(f"{agent}: {format_path(path)}\n")
+    #         f.write("Path length: {}\n".format(len(path)))
+
     running = True
     while running:
         for event in pygame.event.get():
@@ -183,6 +181,16 @@ def multi_agent():
     sys.exit()
 
 
+def main():
+    # level: int = int(input("Enter level (1-4): "))
+    # input_num: int = int(input("Enter input number (1-5): "))
+    level, input_num = 4, 4
+
+    if level >= 1 and level <= 3:
+        single_agent(input_num, level)
+    else:
+        multiple_agent(input_num)
+
+
 if __name__ == "__main__":
     main()
-    # multi_agent()

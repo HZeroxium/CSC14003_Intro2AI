@@ -173,6 +173,9 @@ class CityMap:
 
         return Cell(-1, -1, CellType.OBSTACLE, -1)
 
+    def set_cell(self, position: Tuple[int, int], cell: Cell):
+        self.grid[position[0]][position[1]] = cell
+
     def is_valid_move(self, position: Tuple[int, int]) -> bool:
         cell = self.get_cell(position)
 
