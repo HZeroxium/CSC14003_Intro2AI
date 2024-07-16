@@ -94,10 +94,7 @@ def single_agent(screen, city_map: CityMap, output: str, level: int = 1):
     goal = city_map.goal
     for name, algorithm in algorithms[level].items():
         if level == 1:
-            start_time = time.time()
             path = algorithm(city_map, start, goal)
-            end_time = time.time()
-            print(f"{name}:", end_time - start_time)
         if level <= 3:
             path = algorithm(city_map, start, goal, level)
         visualize_path(screen, city_map, path, PATH_COLORS[i])

@@ -5,7 +5,7 @@ import heapq
 
 
 def gbfs(
-    city_map: CityMap, start: Tuple[int, int], goal: Tuple[int, int], level: int = 1
+    city_map: CityMap, start: Tuple[int, int], goal: Tuple[int, int]
 ) -> List[Tuple[int, int]]:
     frontier: List[Tuple[int, Tuple[int, int]]] = [(0, start)]
     visited: Set[Tuple[int, int]] = set()

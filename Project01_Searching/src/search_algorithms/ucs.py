@@ -5,7 +5,7 @@ from typing import Dict, Set, List, Tuple
 
 
 def ucs(
-    city_map: CityMap, start: Tuple[int, int], goal: Tuple[int, int], leveL: int = 1
+    city_map: CityMap, start: Tuple[int, int], goal: Tuple[int, int]
 ) -> list[tuple]:
     frontier: List[Tuple[int, Tuple[int, int]]] = [(0, start)]
     visited: Set[Tuple[int, int]] = set()

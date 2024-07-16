@@ -4,7 +4,7 @@ from typing import Dict, Set, List, Tuple
 
 
 def dfs(
-    city_map: CityMap, start: Tuple[int, int], goal: Tuple[int, int], level: int = 1
+    city_map: CityMap, start: Tuple[int, int], goal: Tuple[int, int]
 ) -> List[Tuple[int, int]]:
     stack: List[Tuple[int, int]] = [start]
     parent: Dict[Tuple[int, int], Tuple[int, int]] = {start: None}

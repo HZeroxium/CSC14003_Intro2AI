@@ -6,7 +6,7 @@ from typing import Dict, Tuple, List, Set
 
 
 def bfs(
-    city_map: CityMap, start: Tuple[int, int], goal: Tuple[int, int], level: int = 1
+    city_map: CityMap, start: Tuple[int, int], goal: Tuple[int, int]
 ) -> List[Tuple[int, int]]:
     frontier = deque([start])
 
