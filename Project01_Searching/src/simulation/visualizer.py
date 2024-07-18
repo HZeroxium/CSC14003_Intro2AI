@@ -28,17 +28,16 @@ FUEL_STATION_COLOR = (255, 255, 0)
 TOLL_ROAD_COLOR = (128, 128, 128)
 TEST_COLOR = (255, 0, 255)
 PATH_COLORS = [
-    (201, 30, 14),
-    (15, 212, 205),
-    (212, 133, 15),
-    (107, 212, 15),
-    (15, 212, 107),
-    (212, 15, 186),
-    (15, 71, 212),
-    (133, 15, 212),
-    (212, 15, 113),
+    (200, 72, 72),       # Bright Red
+    (72, 200, 72),       # Bright Green
+    (72, 72, 200),       # Bright Blue
+    (200, 200, 72),     # Yellow
+    (200, 72, 200),     # Magenta
+    (72, 200, 200),     # Cyan
+    (128, 72, 128),     # Purple
+    (200, 165, 72),     # Orange
+    (72, 128, 128),     # Teal
 ]
-
 
 # Constants for the screens
 SCREEN_WIDTH = 800
@@ -95,7 +94,7 @@ def single_agent(screen, city_map: CityMap, output: str, level: int = 1):
     for name, algorithm in algorithms[level].items():
         if level == 1:
             path = algorithm(city_map, start, goal)
-        if level <= 3:
+        elif level <= 3:
             path = algorithm(city_map, start, goal, level)
         visualize_path(screen, city_map, path, PATH_COLORS[i])
         pygame.display.update()
