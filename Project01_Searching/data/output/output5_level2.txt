@@ -1,1 +1,2 @@
-No path found
+AStar: No path found
+Path length: -1

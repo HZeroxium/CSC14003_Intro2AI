@@ -13,6 +13,7 @@ from simulation.multiple_agents import (
     complex_a_star_multi_agent,
 )
 
+from multiagent.cbs import cbs
 from simulation.test import cbs_multiple_agent
 
 # Constants

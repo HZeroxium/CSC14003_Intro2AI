@@ -24,7 +24,7 @@ class Agent:
         )
 
     def __hash__(self):
-        return hash((self.id, self.start, self.goal))
+        return (self.id + 1) * 1000000 + (self.start + 1) * 1000 + (self.goal + 1)
 
 
 def get_agents(city_map: CityMap) -> List[Agent]:
