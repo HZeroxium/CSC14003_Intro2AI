@@ -323,7 +323,7 @@ class CBS(object):
             goal = path[-1]
             path_list = [f"({state.location.x}, {state.location.y})" for state in path]
             path_str = " -> ".join(path_list)
-            plan_description = f"Agent: ({start.location.x}, {start.location.y}) -> ({goal.location.x}, {goal.location.y}): {path_str}\nPath length: {len(path)}"
+            plan_description = f"({start.location.x}, {start.location.y}) -> ({goal.location.x}, {goal.location.y}): {path_str}\nPath length: {len(path)}"
             plan[agent] = plan_description
         return plan
 
@@ -368,11 +368,6 @@ class CBS(object):
                     self.open_set |= {new_node}
 
         return {}
-def parse_arguments():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("param", help="input file containing map and agents")
-    parser.add_argument("output", help="output file with the schedule")
-    return parser.parse_args()
 
 def parse_input_file(param_file, height):
     agents = []
@@ -426,11 +421,15 @@ def write_output(output_file, solution):
         for agent, details in solution.items():
             file.write(f"{agent}: {details}\n")
 
-def main():
-    args = parse_arguments()
+def parse_arguments():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("param", help="input file containing map and agents")
+    parser.add_argument("output", help="output file with the schedule")
+    return parser.parse_args()
 
+def cbs(inputpath, outputpath):
     try:
-        with open(args.param, 'r') as param_file:
+        with open(inputpath, 'r') as param_file:
             header = param_file.readline().strip().split()
             if len(header) != 4:
                 raise ValueError("Header must contain exactly four integer values.")
@@ -447,10 +446,18 @@ def main():
                 print("Solution not found")
                 return
 
-            write_output(args.output, solution)
+            write_output(outputpath, solution)
+            return solution
 
     except Exception as e:
         print(f"Error processing the input file: {e}")
 
+def parse_arguments():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("input", help="input file containing map and agents")
+    parser.add_argument("output", help="output file with the schedule")
+    return parser.parse_args()
+
 if __name__ == "__main__":
-    main()
+    args = parse_arguments()
+    cbs(args.input, args.output)

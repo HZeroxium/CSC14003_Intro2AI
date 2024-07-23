@@ -14,7 +14,6 @@ from simulation.multiple_agents import (
 )
 
 from multiagent.cbs import cbs
-from simulation.test import cbs_multiple_agent
 
 # Constants
 CELL_SIZE = 60
@@ -110,27 +109,80 @@ def single_agent(screen, city_map: CityMap, output: str, level: int = 1):
 
     run_simulation_screen(screen)
 
+def strip_agent_names(solution):
+    stripped_solution = {}
+    for key, value in solution.items():
+        # Strip the agent name part from the key
+        new_key = key.split(': ')[1] if ': ' in key else key
+        stripped_solution[new_key] = value
+    return stripped_solution
 
-def multiple_agent(screen, city_map: CityMap, output: str):
+def convert_solution_to_dict(agents: List[Agent], solution):
+    agent_path_dict = {}
+    agent_names = [f'agent{index}' for index, _ in enumerate(agents)]
+    
+    for agent_name, agent in zip(agent_names, agents):
+        # Create a string that matches the format used as keys in the solution
+        agent_description = f"{agent_name}: ({agent.start[0]}, {agent.start[1]}) -> ({agent.goal[0]}, {agent.goal[1]}):"
+        
+        # Extract the path string from the solution using the formatted description
+        path_str = ''
+        for key in solution:
+            if key.startswith(agent_name):
+                path_str = solution[key]
+                break
+
+        # Debug prints
+        print(f"Agent Description: {agent_description}")
+        print(f"Path String: {path_str}")
+
+        # If a path is found, parse it into a list of tuples
+        if path_str:
+            path_list = parse_path_from_description(path_str)
+            agent_path_dict[agent] = path_list
+        else:
+            agent_path_dict[agent] = []  # If no path, return an empty list
+
+    return agent_path_dict
+
+def parse_path_from_description(path_str):
+    # Extract the path part from the string
+    path_part = path_str.split(": ")[1].split("\n")[0]
+    # Convert the path string into a list of tuples
+    path_tuples = [tuple(map(int, point.strip("()").split(", "))) for point in path_part.split(" -> ")]
+    return path_tuples
+
+
+def parse_path(path_str):
+    # Converts path string "x, y -> x, y -> ..." into list of tuples [(x, y), (x, y), ...]
+    return [tuple(map(int, coord.split(', '))) for coord in path_str.strip().split(' -> ')]
+
+def format_path(path):
+    return ' -> '.join(f'({x}, {y})' for x, y in path)
+
+
+def multiple_agent(screen, city_map: CityMap, output: str, filepath: str):
     agents = get_agents(city_map)
-    # paths = a_star_multi_agent(city_map, agents)
+    raw_solution = cbs(filepath, output)  # Get raw solution from CBS
 
-    algorithms = {
-        "Simple A*": simple_a_star_multi_agent,
-        "Complex A*": complex_a_star_multi_agent,
-        "CBS": cbs_multiple_agent,
-    }
-    algorithm = algorithms["CBS"]
-    paths = algorithm(city_map, agents)
+    print("Raw Solution from CBS:")
+    print(raw_solution)
+    print("---------------------------------------------------------------")
+    # Convert the raw solution into the required dictionary format
+    
+    paths = convert_solution_to_dict(agents, raw_solution)
+    
+    print("Formatted Paths for Each Agent:")
+    for agent, path in paths.items():
+        print(f"Agent {agent.id} Path:")
+        for step, pos in enumerate(path):
+            print(f"  Step {step}: Position {pos}")
+    print("---------------------------------------------------------------")
+
+    # Visualize and handle the paths as required
     visualize_multi_path(screen, city_map, paths)
-
-    with open(output, "w") as f:
-        for agent, path in paths.items():
-            f.write(f"{agent}: {format_path(path)}\n")
-            f.write("Path length: {}\n".format(len(path)))
-
+    
     run_simulation_screen(screen)
-
 
 def run_level_screen(screen):
     screen.fill(WHITE)
@@ -231,7 +283,7 @@ def run_simulation_screen(screen, level=None, input_file=None):
         if int(level) >= 1 and int(level) <= 3:
             single_agent(screen, city_map, output, int(level))
         else:
-            multiple_agent(screen, city_map, output)
+            multiple_agent(screen, city_map, output, filepath)
 
     running = True
     while running:
@@ -353,7 +405,7 @@ def average_color(colors: List[Tuple[int, int, int]]) -> Tuple[int, int, int]:
 
 
 def visualize_multi_path(
-    screen, city_map: CityMap, paths: Dict["Agent", List[Tuple[int, int]]]
+    screen, city_map: CityMap, paths: Dict[Agent, List[Tuple[int, int]]]
 ):
     max_steps = max(len(path) for path in paths.values())
     agent_colors = {
@@ -362,7 +414,6 @@ def visualize_multi_path(
 
     # Initialize the matrix to keep track of cell colors
     cell_colors = {}
-
     for step in range(max_steps):
         for agent, path in paths.items():
             if step < len(path):
