@@ -1,10 +1,10 @@
-BFS: No path found
+BFS: 
 Path length: -1
-DFS: No path found
+DFS: 
 Path length: -1
-UCS: No path found
+UCS: 
 Path length: -1
-GBFS: No path found
+GBFS: 
 Path length: -1
-AStar: No path found
+AStar: 
 Path length: -1
