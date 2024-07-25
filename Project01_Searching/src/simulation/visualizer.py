@@ -336,6 +336,8 @@ def draw_grid(screen, city_map: CityMap, font):
             pygame.draw.rect(screen, GRID_COLOR, rect, 1)
             if celltype not in [CellType.EMPTY, CellType.OBSTACLE]:
                 str_value = str(city_map.grid[row][col].value)
+                if celltype == CellType.FUEL_STATION:
+                    str_value = "F" + str_value
                 text_surface = font.render(str_value, True, TEXT_COLOR)
                 text_rect = text_surface.get_rect(center=rect.center)
                 screen.blit(text_surface, text_rect)
@@ -356,7 +358,7 @@ def draw_grid(screen, city_map: CityMap, font):
             PATH_COLORS[i % len(PATH_COLORS)],
             (goal[1] * CELL_SIZE, goal[0] * CELL_SIZE, CELL_SIZE, CELL_SIZE),
         )
-        text_surface = font.render(str(i), True, TEXT_COLOR)
+        text_surface = font.render("S" + str(i), True, TEXT_COLOR)
         text_rect = text_surface.get_rect(
             center=(
                 start[1] * CELL_SIZE + CELL_SIZE // 2,
@@ -364,7 +366,7 @@ def draw_grid(screen, city_map: CityMap, font):
             )
         )
         screen.blit(text_surface, text_rect)
-        text_surface = font.render(str(i), True, TEXT_COLOR)
+        text_surface = font.render("G" + str(i), True, TEXT_COLOR)
         text_rect = text_surface.get_rect(
             center=(
                 goal[1] * CELL_SIZE + CELL_SIZE // 2,
