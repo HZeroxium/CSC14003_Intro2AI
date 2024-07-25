@@ -1,2 +1,2 @@
 AStar: No path found
-Path length: 0
+Path length: -1
