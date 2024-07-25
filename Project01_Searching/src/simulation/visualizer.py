@@ -9,8 +9,6 @@ from search_algorithms import bfs, dfs, ucs, gbfs, a_star
 from utils import format_path
 from simulation.multiple_agents import (
     get_agents,
-    simple_a_star_multi_agent,
-    complex_a_star_multi_agent,
 )
 
 from multiagent.cbs import cbs
@@ -28,15 +26,15 @@ FUEL_STATION_COLOR = (255, 255, 0)
 TOLL_ROAD_COLOR = (128, 128, 128)
 TEST_COLOR = (255, 0, 255)
 PATH_COLORS = [
-    (200, 72, 72),       # Bright Red
-    (72, 200, 72),       # Bright Green
-    (72, 72, 200),       # Bright Blue
-    (200, 200, 72),     # Yellow
-    (200, 72, 200),     # Magenta
-    (72, 200, 200),     # Cyan
-    (128, 72, 128),     # Purple
-    (200, 165, 72),     # Orange
-    (72, 128, 128),     # Teal
+    (200, 72, 72),  # Bright Red
+    (3, 219, 252),  # Bright Green
+    (72, 72, 200),  # Bright Blue
+    (200, 200, 72),  # Yellow
+    (200, 72, 200),  # Magenta
+    (72, 200, 200),  # Cyan
+    (128, 72, 128),  # Purple
+    (200, 165, 72),  # Orange
+    (72, 128, 128),  # Teal
 ]
 
 # Constants for the screens
@@ -109,24 +107,26 @@ def single_agent(screen, city_map: CityMap, output: str, level: int = 1):
 
     run_simulation_screen(screen)
 
+
 def strip_agent_names(solution):
     stripped_solution = {}
     for key, value in solution.items():
         # Strip the agent name part from the key
-        new_key = key.split(': ')[1] if ': ' in key else key
+        new_key = key.split(": ")[1] if ": " in key else key
         stripped_solution[new_key] = value
     return stripped_solution
 
+
 def convert_solution_to_dict(agents: List[Agent], solution):
     agent_path_dict = {}
-    agent_names = [f'agent{index}' for index, _ in enumerate(agents)]
-    
+    agent_names = [f"agent{index}" for index, _ in enumerate(agents)]
+
     for agent_name, agent in zip(agent_names, agents):
         # Create a string that matches the format used as keys in the solution
         agent_description = f"{agent_name}: ({agent.start[0]}, {agent.start[1]}) -> ({agent.goal[0]}, {agent.goal[1]}):"
-        
+
         # Extract the path string from the solution using the formatted description
-        path_str = ''
+        path_str = ""
         for key in solution:
             if key.startswith(agent_name):
                 path_str = solution[key]
@@ -145,20 +145,27 @@ def convert_solution_to_dict(agents: List[Agent], solution):
 
     return agent_path_dict
 
+
 def parse_path_from_description(path_str):
     # Extract the path part from the string
     path_part = path_str.split(": ")[1].split("\n")[0]
     # Convert the path string into a list of tuples
-    path_tuples = [tuple(map(int, point.strip("()").split(", "))) for point in path_part.split(" -> ")]
+    path_tuples = [
+        tuple(map(int, point.strip("()").split(", ")))
+        for point in path_part.split(" -> ")
+    ]
     return path_tuples
 
 
 def parse_path(path_str):
     # Converts path string "x, y -> x, y -> ..." into list of tuples [(x, y), (x, y), ...]
-    return [tuple(map(int, coord.split(', '))) for coord in path_str.strip().split(' -> ')]
+    return [
+        tuple(map(int, coord.split(", "))) for coord in path_str.strip().split(" -> ")
+    ]
+
 
 def format_path(path):
-    return ' -> '.join(f'({x}, {y})' for x, y in path)
+    return " -> ".join(f"({x}, {y})" for x, y in path)
 
 
 def multiple_agent(screen, city_map: CityMap, output: str, filepath: str):
@@ -169,9 +176,9 @@ def multiple_agent(screen, city_map: CityMap, output: str, filepath: str):
     print(raw_solution)
     print("---------------------------------------------------------------")
     # Convert the raw solution into the required dictionary format
-    
+
     paths = convert_solution_to_dict(agents, raw_solution)
-    
+
     print("Formatted Paths for Each Agent:")
     for agent, path in paths.items():
         print(f"Agent {agent.id} Path:")
@@ -181,8 +188,9 @@ def multiple_agent(screen, city_map: CityMap, output: str, filepath: str):
 
     # Visualize and handle the paths as required
     visualize_multi_path(screen, city_map, paths)
-    
+
     run_simulation_screen(screen)
+
 
 def run_level_screen(screen):
     screen.fill(WHITE)
@@ -419,14 +427,14 @@ def visualize_multi_path(
             if step < len(path):
                 pos = path[step]
                 row, col = pos
-                agent_color = agent_colors[agent]
+                # agent_color = agent_colors[agent]
 
-                if pos in cell_colors:
-                    cell_colors[pos].append(agent_color)
-                else:
-                    cell_colors[pos] = [agent_color]
+                # if pos in cell_colors:
+                #     cell_colors[pos].append(agent_color)
+                # else:
+                #     cell_colors[pos] = [agent_color]
 
-                avg_color = average_color(cell_colors[pos])
+                avg_color = PATH_COLORS[agent.id % len(PATH_COLORS)]
 
                 # Draw the path segment with the average color
                 if step > 0:
