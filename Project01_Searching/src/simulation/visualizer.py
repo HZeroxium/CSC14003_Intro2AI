@@ -51,12 +51,14 @@ GRAY = (200, 200, 200)
 BLUE = (0, 128, 255)
 
 
+# Function to get the screen
 def get_screen():
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     pygame.display.set_caption("Search Algorithm Visualization")
     return screen
 
 
+# Function to draw a button on the screen
 def draw_button(screen, text, pos, size, color=GRAY):
     font = pygame.font.SysFont(None, 36)
     rect = pygame.Rect(pos, size)
@@ -68,6 +70,7 @@ def draw_button(screen, text, pos, size, color=GRAY):
     return rect
 
 
+# Function to visualize the path of a single agent
 def single_agent(screen, city_map: CityMap, output: str, level: int = 1):
     algorithms = {
         1: {
@@ -164,10 +167,12 @@ def parse_path(path_str):
     ]
 
 
+# Function to format the path into a dictionary
 def format_path(path):
     return " -> ".join(f"({x}, {y})" for x, y in path)
 
 
+# Function to visualize the paths of multiple agents
 def multiple_agent(screen, city_map: CityMap, output: str, filepath: str):
     agents = get_agents(city_map)
     raw_solution = cbs(filepath, output)  # Get raw solution from CBS
@@ -192,6 +197,7 @@ def multiple_agent(screen, city_map: CityMap, output: str, filepath: str):
     run_simulation_screen(screen)
 
 
+# Main function to run the level screen
 def run_level_screen(screen):
     screen.fill(WHITE)
     font = pygame.font.SysFont(None, 48)
@@ -225,6 +231,7 @@ def run_level_screen(screen):
                         return
 
 
+# Main function to run the input file screen
 def run_input_file_screen(screen, level):
     screen.fill(WHITE)
     font = pygame.font.SysFont(None, 48)
@@ -272,6 +279,7 @@ def run_input_file_screen(screen, level):
                     return
 
 
+# Main function to run the simulation screen
 def run_simulation_screen(screen, level=None, input_file=None):
     if level and input_file:
         filepath = f"../data/input/{input_file}"
@@ -307,6 +315,7 @@ def run_simulation_screen(screen, level=None, input_file=None):
     sys.exit()
 
 
+# Helper function to draw the grid on the screen
 def draw_grid(screen, city_map: CityMap, font):
     i = 0
     for row in range(city_map.rows):
@@ -365,6 +374,7 @@ def draw_grid(screen, city_map: CityMap, font):
         screen.blit(text_surface, text_rect)
 
 
+# Helper function to visualize a single agent path on the screen
 def visualize_path(screen, city_map: CityMap, path, color=PATH_COLOR):
     if not path:
         return
@@ -397,6 +407,7 @@ def visualize_path(screen, city_map: CityMap, path, color=PATH_COLOR):
         time.sleep(0.1)
 
 
+# Helper functions for visualizing multiple agents, calculate average color for overlapping paths
 def average_color(colors: List[Tuple[int, int, int]]) -> Tuple[int, int, int]:
     """
     Calculate the average color from a list of RGB color tuples.
