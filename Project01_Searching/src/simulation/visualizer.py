@@ -51,8 +51,9 @@ BLACK = (0, 0, 0)
 GRAY = (200, 200, 200)
 BLUE = (0, 128, 255)
 
-# Global variable to control the timer
+# Global variable to control the timer and path-counter
 timer_running = False
+path_counter = 0
 
 
 # Function to get the screen
@@ -76,6 +77,8 @@ def draw_button(screen, text, pos, size, color=GRAY):
 
 # Function to visualize the path of a single agent
 def single_agent(screen, city_map: CityMap, output: str, level: int = 1):
+    global path_counter
+
     algorithms = {
         1: {
             "BFS": bfs.bfs,
@@ -96,6 +99,7 @@ def single_agent(screen, city_map: CityMap, output: str, level: int = 1):
     paths = {}
     start = city_map.start
     goal = city_map.goal
+    path_counter = 0
     for name, algorithm in algorithms[level].items():
         if level == 1:
             path = algorithm(city_map, start, goal)
@@ -106,6 +110,7 @@ def single_agent(screen, city_map: CityMap, output: str, level: int = 1):
         pygame.time.wait(1000)
         i += 1
         paths[name] = path
+        path_counter += 1
 
     with open(output, "w") as f:
         for name, path in paths.items():
@@ -176,6 +181,8 @@ def format_path(path):
 
 # Function to visualize the paths of multiple agents
 def multiple_agent(screen, city_map: CityMap, output: str, filepath: str):
+    global path_counter
+
     agents = get_agents(city_map)
     raw_solution = cbs(filepath, output)  # Get raw solution from CBS
 
@@ -183,8 +190,9 @@ def multiple_agent(screen, city_map: CityMap, output: str, filepath: str):
     print(raw_solution)
     print("---------------------------------------------------------------")
     # Convert the raw solution into the required dictionary format
-
     paths = convert_solution_to_dict(agents, raw_solution)
+
+    path_counter = len(paths)
 
     print("Formatted Paths for Each Agent:")
     for agent, path in paths.items():
@@ -304,6 +312,9 @@ def run_simulation_screen(screen, level=None, input_file=None):
         timer_thread = threading.Thread(target=timer_function, args=(screen, city_map.cols, start_time))
         timer_thread.start()
 
+        path_counter_thread = threading.Thread(target=path_counter_function, args=(screen, city_map.cols))
+        path_counter_thread.start()
+
         if int(level) >= 1 and int(level) <= 3:
             single_agent(screen, city_map, output, int(level))
         else:
@@ -311,6 +322,7 @@ def run_simulation_screen(screen, level=None, input_file=None):
 
         timer_running = False
         timer_thread.join()
+        path_counter_thread.join()
 
     running = True
     while running:
@@ -325,19 +337,36 @@ def run_simulation_screen(screen, level=None, input_file=None):
     pygame.quit()
     sys.exit()
 
-# Helper function to control the running timer
+# Helper function to update the real-time timer on the screen
 def timer_function(screen, city_map_cols, start_time):
     global timer_running
     font = pygame.font.SysFont(None, 36)
     
     while timer_running:
         elapsed_time = time.time() - start_time
-        text_surface = font.render('{:.3f} s'.format(elapsed_time), True, BLACK)
-        text_rect = text_surface.get_rect(topleft=(city_map_cols * CELL_SIZE + 90, 150))
+        timer_text_surface = font.render('{:.3f} s'.format(elapsed_time), True, BLACK)
+        timer_text_rect = timer_text_surface.get_rect(topleft=(city_map_cols * CELL_SIZE + 90, 150))
         
         # Clear the previous timer text
-        pygame.draw.rect(screen, WHITE, text_rect)
-        screen.blit(text_surface, text_rect)
+        pygame.draw.rect(screen, WHITE, timer_text_rect)
+        screen.blit(timer_text_surface, timer_text_rect)
+        
+        pygame.display.update()
+        time.sleep(0.1)  # Update every 0.1 second
+
+
+# Helper function to update the real-time path counter on the screen
+def path_counter_function(screen, city_map_cols):
+    global path_counter, timer_running
+    font = pygame.font.SysFont(None, 36)
+    
+    while timer_running:
+        path_counter_text_surface = font.render(f'{path_counter}', True, BLACK)
+        path_counter_text_rect = path_counter_text_surface.get_rect(topleft=(city_map_cols * CELL_SIZE + 90, 180))
+        
+        # Clear the previous counter text
+        pygame.draw.rect(screen, WHITE, path_counter_text_rect)
+        screen.blit(path_counter_text_surface, path_counter_text_rect)
         
         pygame.display.update()
         time.sleep(0.1)  # Update every 0.1 second
@@ -349,11 +378,16 @@ def draw_info_box(screen, width):
     info_box_rect = pygame.Rect(width, 0, INFO_BOX_WIDTH, INFO_BOX_HEIGHT)
     pygame.draw.rect(screen, BACKGROUND_COLOR, info_box_rect)  # Set background to white
 
-    # Display text in the info box
+    # Display information in the info box
     font = pygame.font.SysFont(None, 36)
-    text_surface = font.render('Time: ', True, BLACK)
-    text_rect = text_surface.get_rect(topleft=(width + 10, 150))
-    screen.blit(text_surface, text_rect)
+
+    timer_text_surface = font.render('Time : ', True, BLACK)
+    timer_text_rect = timer_text_surface.get_rect(topleft=(width + 10, 150))
+    screen.blit(timer_text_surface, timer_text_rect)
+
+    paths_text_surface = font.render('Paths: ', True, BLACK)
+    paths_text_rect = paths_text_surface.get_rect(topleft=(width + 10, 180))
+    screen.blit(paths_text_surface, paths_text_rect)
 
 
 # Helper function to draw the grid on the screen
