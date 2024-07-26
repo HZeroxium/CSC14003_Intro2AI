@@ -37,23 +37,29 @@ PATH_COLORS = [
 # Constants for the screens
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
-BUTTON_WIDTH = 240
+BUTTON_WIDTH = 200
 BUTTON_HEIGHT = 60
 MARGIN = 20
 
 # Constants for the simulation
-INFO_BOX_WIDTH = 200
+INFO_BOX_WIDTH = 300
 INFO_BOX_HEIGHT = SCREEN_HEIGHT
 
 # Colors
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 GRAY = (200, 200, 200)
+RED = (220,20,60)
+GREEN = (0, 255, 0)
 BLUE = (0, 128, 255)
 
 # Global variable to control the timer and path-counter
 timer_running = False
-path_counter = 0
+
+# Global variable to control the step of visualization
+pause = True
+show_all = False
+exit = False
 
 
 # Function to get the screen
@@ -77,7 +83,7 @@ def draw_button(screen, text, pos, size, color=GRAY):
 
 # Function to visualize the path of a single agent
 def single_agent(screen, city_map: CityMap, output: str, level: int = 1):
-    global path_counter
+    global pause, show_all, exit
 
     algorithms = {
         1: {
@@ -95,22 +101,59 @@ def single_agent(screen, city_map: CityMap, output: str, level: int = 1):
         },
     }
 
+    # Add buttons
+    next_button = draw_button(
+        screen,
+        "Next",
+        (SCREEN_WIDTH - 150, 300),
+        (BUTTON_WIDTH, BUTTON_HEIGHT),
+    )
+    all_button = draw_button(
+        screen,
+        "All",
+        (SCREEN_WIDTH - 150, 380),
+        (BUTTON_WIDTH, BUTTON_HEIGHT),
+    )
+    exit_button = draw_button(
+        screen,
+        "Exit",
+        (SCREEN_WIDTH - 150, 460),
+        (BUTTON_WIDTH, BUTTON_HEIGHT),
+        RED
+    )
+    pygame.display.update()
+
     i = 0
     paths = {}
     start = city_map.start
     goal = city_map.goal
-    path_counter = 0
     for name, algorithm in algorithms[level].items():
         if level == 1:
             path = algorithm(city_map, start, goal)
         elif level <= 3:
             path = algorithm(city_map, start, goal, level)
-        visualize_path(screen, city_map, path, PATH_COLORS[i])
+
+        visualize_path(screen, next_button, all_button, exit_button, city_map, path, PATH_COLORS[i])
         pygame.display.update()
+
+        if exit == True:
+            break
+
         pygame.time.wait(1000)
         i += 1
         paths[name] = path
-        path_counter += 1
+
+    show_all = False
+    exit = False
+    # Update the next button to show "Done"
+    done_button = draw_button(
+        screen,
+        "Done",
+        (SCREEN_WIDTH - 150, 300),
+        (BUTTON_WIDTH, BUTTON_HEIGHT),
+        GREEN,
+    )
+    pygame.display.update()
 
     with open(output, "w") as f:
         for name, path in paths.items():
@@ -181,8 +224,6 @@ def format_path(path):
 
 # Function to visualize the paths of multiple agents
 def multiple_agent(screen, city_map: CityMap, output: str, filepath: str):
-    global path_counter
-
     agents = get_agents(city_map)
     raw_solution = cbs(filepath, output)  # Get raw solution from CBS
 
@@ -191,8 +232,6 @@ def multiple_agent(screen, city_map: CityMap, output: str, filepath: str):
     print("---------------------------------------------------------------")
     # Convert the raw solution into the required dictionary format
     paths = convert_solution_to_dict(agents, raw_solution)
-
-    path_counter = len(paths)
 
     print("Formatted Paths for Each Agent:")
     for agent, path in paths.items():
@@ -312,9 +351,6 @@ def run_simulation_screen(screen, level=None, input_file=None):
         timer_thread = threading.Thread(target=timer_function, args=(screen, city_map.cols, start_time))
         timer_thread.start()
 
-        path_counter_thread = threading.Thread(target=path_counter_function, args=(screen, city_map.cols))
-        path_counter_thread.start()
-
         if int(level) >= 1 and int(level) <= 3:
             single_agent(screen, city_map, output, int(level))
         else:
@@ -322,7 +358,6 @@ def run_simulation_screen(screen, level=None, input_file=None):
 
         timer_running = False
         timer_thread.join()
-        path_counter_thread.join()
 
     running = True
     while running:
@@ -345,28 +380,11 @@ def timer_function(screen, city_map_cols, start_time):
     while timer_running:
         elapsed_time = time.time() - start_time
         timer_text_surface = font.render('{:.3f} s'.format(elapsed_time), True, BLACK)
-        timer_text_rect = timer_text_surface.get_rect(topleft=(city_map_cols * CELL_SIZE + 90, 150))
+        timer_text_rect = timer_text_surface.get_rect(topleft=(city_map_cols * CELL_SIZE + 130, 150))
         
         # Clear the previous timer text
         pygame.draw.rect(screen, WHITE, timer_text_rect)
         screen.blit(timer_text_surface, timer_text_rect)
-        
-        pygame.display.update()
-        time.sleep(0.1)  # Update every 0.1 second
-
-
-# Helper function to update the real-time path counter on the screen
-def path_counter_function(screen, city_map_cols):
-    global path_counter, timer_running
-    font = pygame.font.SysFont(None, 36)
-    
-    while timer_running:
-        path_counter_text_surface = font.render(f'{path_counter}', True, BLACK)
-        path_counter_text_rect = path_counter_text_surface.get_rect(topleft=(city_map_cols * CELL_SIZE + 90, 180))
-        
-        # Clear the previous counter text
-        pygame.draw.rect(screen, WHITE, path_counter_text_rect)
-        screen.blit(path_counter_text_surface, path_counter_text_rect)
         
         pygame.display.update()
         time.sleep(0.1)  # Update every 0.1 second
@@ -382,12 +400,8 @@ def draw_info_box(screen, width):
     font = pygame.font.SysFont(None, 36)
 
     timer_text_surface = font.render('Time : ', True, BLACK)
-    timer_text_rect = timer_text_surface.get_rect(topleft=(width + 10, 150))
+    timer_text_rect = timer_text_surface.get_rect(topleft=(width + 50, 150))
     screen.blit(timer_text_surface, timer_text_rect)
-
-    paths_text_surface = font.render('Paths: ', True, BLACK)
-    paths_text_rect = paths_text_surface.get_rect(topleft=(width + 10, 180))
-    screen.blit(paths_text_surface, paths_text_rect)
 
 
 # Helper function to draw the grid on the screen
@@ -452,11 +466,15 @@ def draw_grid(screen, city_map: CityMap, font):
 
 
 # Helper function to visualize a single agent path on the screen
-def visualize_path(screen, city_map: CityMap, path, color=PATH_COLOR):
+def visualize_path(screen, next_button, all_button, exit_button, city_map: CityMap, path, color=PATH_COLOR):
     if not path:
         return
 
+    global pause, show_all, exit  
+    
     for i in range(len(path) - 1):
+        pause = True
+
         row1, col1 = path[i]
         row2, col2 = path[i + 1]
         x1 = col1 * CELL_SIZE + CELL_SIZE // 2
@@ -481,8 +499,21 @@ def visualize_path(screen, city_map: CityMap, path, color=PATH_COLOR):
                 pygame.draw.line(screen, color, (mid_x, mid_y), (x2, y2), 5)
 
         pygame.display.update()
-        time.sleep(0.1)
 
+        while pause and not show_all:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    return
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    if next_button.collidepoint(event.pos):
+                        pause = False
+                    elif all_button.collidepoint(event.pos):
+                        show_all = True
+                    elif exit_button.collidepoint(event.pos):
+                        exit = True
+                        return
+
+        time.sleep(0.1)
 
 # Helper functions for visualizing multiple agents, calculate average color for overlapping paths
 def average_color(colors: List[Tuple[int, int, int]]) -> Tuple[int, int, int]:
@@ -499,18 +530,57 @@ def average_color(colors: List[Tuple[int, int, int]]) -> Tuple[int, int, int]:
     b = int(b_sum / len(colors))
     return (r, g, b)
 
-
 def visualize_multi_path(
     screen, city_map: CityMap, paths: Dict[Agent, List[Tuple[int, int]]]
 ):
+    global pause, show_all, exit    
+
     max_steps = max(len(path) for path in paths.values())
     agent_colors = {
         agent: PATH_COLORS[i % len(PATH_COLORS)] for i, agent in enumerate(paths)
     }
 
+    # Add buttons
+    next_button = draw_button(
+        screen,
+        "Next",
+        (SCREEN_WIDTH - 150, 300),
+        (BUTTON_WIDTH, BUTTON_HEIGHT),
+    )
+    all_button = draw_button(
+        screen,
+        "All",
+        (SCREEN_WIDTH - 150, 380),
+        (BUTTON_WIDTH, BUTTON_HEIGHT),
+    )
+    exit_button = draw_button(
+        screen,
+        "Exit",
+        (SCREEN_WIDTH - 150, 460),
+        (BUTTON_WIDTH, BUTTON_HEIGHT),
+        RED
+    )
+    pygame.display.update()
+
+    step = 0
+    pause = True
+    show_all = False
+    exit = False
     # Initialize the matrix to keep track of cell colors
     cell_colors = {}
     for step in range(max_steps):
+        while pause and not show_all:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    return
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    if next_button.collidepoint(event.pos):
+                        pause = False
+                    elif all_button.collidepoint(event.pos):
+                        show_all = True
+                    elif exit_button.collidepoint(event.pos):
+                        exit = True
+                        return
         for agent, path in paths.items():
             if step < len(path):
                 pos = path[step]
@@ -580,3 +650,16 @@ def visualize_multi_path(
 
         pygame.display.update()
         pygame.time.wait(500)  # Adjust as needed for desired speed
+        pause = True
+
+        if step == max_steps - 1:
+            show_all = True
+            # Update the next button to show "Done"
+            done_button = draw_button(
+                screen,
+                "Done",
+                (SCREEN_WIDTH - 150, 300),
+                (BUTTON_WIDTH, BUTTON_HEIGHT),
+                GREEN,
+            )
+            pygame.display.update()
