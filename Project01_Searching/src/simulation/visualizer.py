@@ -1,17 +1,14 @@
-import pygame  # type: ignore
-import time
-from citymap import CityMap, CellType
-from typing import List, Tuple, Dict
-from simulation.multiple_agents import Agent
 import sys
 import time
-from search_algorithms import bfs, dfs, ucs, gbfs, a_star
+import pygame
+import threading
 from utils import format_path
-from simulation.multiple_agents import (
-    get_agents,
-)
-
 from multiagent.cbs import cbs
+from typing import List, Tuple, Dict
+from citymap import CityMap, CellType
+from simulation.multiple_agents import Agent
+from simulation.multiple_agents import get_agents
+from search_algorithms import bfs, dfs, ucs, gbfs, a_star
 
 # Constants
 CELL_SIZE = 60
@@ -44,11 +41,18 @@ BUTTON_WIDTH = 240
 BUTTON_HEIGHT = 60
 MARGIN = 20
 
+# Constants for the simulation
+INFO_BOX_WIDTH = 200
+INFO_BOX_HEIGHT = SCREEN_HEIGHT
+
 # Colors
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 GRAY = (200, 200, 200)
 BLUE = (0, 128, 255)
+
+# Global variable to control the timer
+timer_running = False
 
 
 # Function to get the screen
@@ -107,8 +111,6 @@ def single_agent(screen, city_map: CityMap, output: str, level: int = 1):
         for name, path in paths.items():
             f.write(f"{name}: {format_path(path)}\n")
             f.write("Path length: {}\n".format(len(path) - 1))
-
-    run_simulation_screen(screen)
 
 
 def strip_agent_names(solution):
@@ -193,8 +195,6 @@ def multiple_agent(screen, city_map: CityMap, output: str, filepath: str):
 
     # Visualize and handle the paths as required
     visualize_multi_path(screen, city_map, paths)
-
-    run_simulation_screen(screen)
 
 
 # Main function to run the level screen
@@ -281,25 +281,36 @@ def run_input_file_screen(screen, level):
 
 # Main function to run the simulation screen
 def run_simulation_screen(screen, level=None, input_file=None):
+    global timer_running
+
     if level and input_file:
         filepath = f"../data/input/{input_file}"
         city_map = CityMap.from_file(filepath)
 
-        screen_width = city_map.cols * CELL_SIZE
-        screen_height = city_map.rows * CELL_SIZE
+        screen_width = city_map.cols * CELL_SIZE + INFO_BOX_WIDTH
+        screen_height = max(city_map.rows * CELL_SIZE, SCREEN_HEIGHT)
         screen = pygame.display.set_mode((screen_width, screen_height))
         pygame.display.set_caption("Search Algorithm Visualization")
 
         font = pygame.font.SysFont(None, 24)
         draw_grid(screen, city_map, font)
+        draw_info_box(screen, city_map.cols * CELL_SIZE)
         pygame.display.update()
 
         output = f"../data/output/output{input_file.split('_')[0][-1]}_level{level}.txt"
+
+        start_time = time.time()
+        timer_running = True
+        timer_thread = threading.Thread(target=timer_function, args=(screen, city_map.cols, start_time))
+        timer_thread.start()
 
         if int(level) >= 1 and int(level) <= 3:
             single_agent(screen, city_map, output, int(level))
         else:
             multiple_agent(screen, city_map, output, filepath)
+
+        timer_running = False
+        timer_thread.join()
 
     running = True
     while running:
@@ -313,6 +324,36 @@ def run_simulation_screen(screen, level=None, input_file=None):
 
     pygame.quit()
     sys.exit()
+
+# Helper function to control the running timer
+def timer_function(screen, city_map_cols, start_time):
+    global timer_running
+    font = pygame.font.SysFont(None, 36)
+    
+    while timer_running:
+        elapsed_time = time.time() - start_time
+        text_surface = font.render('{:.3f} s'.format(elapsed_time), True, BLACK)
+        text_rect = text_surface.get_rect(topleft=(city_map_cols * CELL_SIZE + 90, 150))
+        
+        # Clear the previous timer text
+        pygame.draw.rect(screen, WHITE, text_rect)
+        screen.blit(text_surface, text_rect)
+        
+        pygame.display.update()
+        time.sleep(0.1)  # Update every 0.1 second
+
+
+# Helper function to draw the information box
+def draw_info_box(screen, width):
+    # Draw the background for the info box
+    info_box_rect = pygame.Rect(width, 0, INFO_BOX_WIDTH, INFO_BOX_HEIGHT)
+    pygame.draw.rect(screen, BACKGROUND_COLOR, info_box_rect)  # Set background to white
+
+    # Display text in the info box
+    font = pygame.font.SysFont(None, 36)
+    text_surface = font.render('Time: ', True, BLACK)
+    text_rect = text_surface.get_rect(topleft=(width + 10, 150))
+    screen.blit(text_surface, text_rect)
 
 
 # Helper function to draw the grid on the screen
