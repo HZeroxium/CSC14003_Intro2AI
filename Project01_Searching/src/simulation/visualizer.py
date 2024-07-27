@@ -35,7 +35,7 @@ PATH_COLORS = [
 ]
 
 # Constants for the screens
-SCREEN_WIDTH = 800
+SCREEN_WIDTH = 600
 SCREEN_HEIGHT = 600
 BUTTON_WIDTH = 200
 BUTTON_HEIGHT = 60
@@ -43,23 +43,20 @@ MARGIN = 20
 
 # Constants for the simulation
 INFO_BOX_WIDTH = 300
-INFO_BOX_HEIGHT = SCREEN_HEIGHT
+INFO_BOX_HEIGHT = 100
 
 # Colors
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 GRAY = (200, 200, 200)
-RED = (220,20,60)
+RED = (220, 20, 60)
 GREEN = (0, 255, 0)
 BLUE = (0, 128, 255)
+YELLOW = (255, 255, 0)
 
-# Global variable to control the timer and path-counter
-timer_running = False
-
-# Global variable to control the step of visualization
-pause = True
-show_all = False
-exit = False
+BUTTON_SIZE = (BUTTON_WIDTH, BUTTON_HEIGHT)
+NEXT_BUTTON_POS = (50, SCREEN_HEIGHT + 20)
+ALL_BUTTON_POS = (NEXT_BUTTON_POS[0] + BUTTON_WIDTH + 100, SCREEN_HEIGHT + 20)
 
 
 # Function to get the screen
@@ -73,6 +70,7 @@ def get_screen():
 def draw_button(screen, text, pos, size, color=GRAY):
     font = pygame.font.SysFont(None, 36)
     rect = pygame.Rect(pos, size)
+
     pygame.draw.rect(screen, color, rect)
     pygame.draw.rect(screen, BLACK, rect, 2)
     text_surface = font.render(text, True, BLACK)
@@ -81,10 +79,48 @@ def draw_button(screen, text, pos, size, color=GRAY):
     return rect
 
 
+def draw_next_button(screen):
+    text = "Next Step"
+    pos = NEXT_BUTTON_POS
+    size = BUTTON_SIZE
+    color = GRAY
+    return draw_button(screen, text, pos, size, color)
+
+
+def draw_all_button(screen):
+    text = "Auto Play"
+    pos = ALL_BUTTON_POS
+    size = BUTTON_SIZE
+    color = GRAY
+    return draw_button(screen, text, pos, size, color)
+
+
+def draw_done_button(screen):
+    text = "Done"
+    pos = NEXT_BUTTON_POS
+    size = BUTTON_SIZE
+    color = GREEN
+    return draw_button(screen, text, pos, size, color)
+
+
+def draw_exit_button(screen):
+    text = "Exit"
+    pos = ALL_BUTTON_POS
+    size = BUTTON_SIZE
+    color = RED
+    return draw_button(screen, text, pos, size, color)
+
+
+def draw_running_button(screen):
+    text = "Running..."
+    pos = ALL_BUTTON_POS
+    size = BUTTON_SIZE
+    color = YELLOW
+    return draw_button(screen, text, pos, size, color)
+
+
 # Function to visualize the path of a single agent
 def single_agent(screen, city_map: CityMap, output: str, level: int = 1):
-    global pause, show_all, exit
-
     algorithms = {
         1: {
             "BFS": bfs.bfs,
@@ -101,28 +137,6 @@ def single_agent(screen, city_map: CityMap, output: str, level: int = 1):
         },
     }
 
-    # Add buttons
-    next_button = draw_button(
-        screen,
-        "Next",
-        (SCREEN_WIDTH - 150, 300),
-        (BUTTON_WIDTH, BUTTON_HEIGHT),
-    )
-    all_button = draw_button(
-        screen,
-        "All",
-        (SCREEN_WIDTH - 150, 380),
-        (BUTTON_WIDTH, BUTTON_HEIGHT),
-    )
-    exit_button = draw_button(
-        screen,
-        "Exit",
-        (SCREEN_WIDTH - 150, 460),
-        (BUTTON_WIDTH, BUTTON_HEIGHT),
-        RED
-    )
-    pygame.display.update()
-
     i = 0
     paths = {}
     start = city_map.start
@@ -133,32 +147,27 @@ def single_agent(screen, city_map: CityMap, output: str, level: int = 1):
         elif level <= 3:
             path = algorithm(city_map, start, goal, level)
 
-        visualize_path(screen, next_button, all_button, exit_button, city_map, path, PATH_COLORS[i])
+        visualize_path(screen, city_map, path, PATH_COLORS[i])
         pygame.display.update()
-
-        if exit == True:
-            break
 
         pygame.time.wait(1000)
         i += 1
         paths[name] = path
 
-    show_all = False
-    exit = False
-    # Update the next button to show "Done"
-    done_button = draw_button(
-        screen,
-        "Done",
-        (SCREEN_WIDTH - 150, 300),
-        (BUTTON_WIDTH, BUTTON_HEIGHT),
-        GREEN,
-    )
+    exit_button = draw_exit_button(screen)
     pygame.display.update()
-
     with open(output, "w") as f:
         for name, path in paths.items():
             f.write(f"{name}: {format_path(path)}\n")
             f.write("Path length: {}\n".format(len(path) - 1))
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if exit_button.collidepoint(event.pos):
+                    return run_level_screen(get_screen())
 
 
 def strip_agent_names(solution):
@@ -186,8 +195,8 @@ def convert_solution_to_dict(agents: List[Agent], solution):
                 break
 
         # Debug prints
-        print(f"Agent Description: {agent_description}")
-        print(f"Path String: {path_str}")
+        # print(f"Agent Description: {agent_description}")
+        # print(f"Path String: {path_str}")
 
         # If a path is found, parse it into a list of tuples
         if path_str:
@@ -227,18 +236,18 @@ def multiple_agent(screen, city_map: CityMap, output: str, filepath: str):
     agents = get_agents(city_map)
     raw_solution = cbs(filepath, output)  # Get raw solution from CBS
 
-    print("Raw Solution from CBS:")
-    print(raw_solution)
-    print("---------------------------------------------------------------")
+    # print("Raw Solution from CBS:")
+    # print(raw_solution)
+    # print("---------------------------------------------------------------")
     # Convert the raw solution into the required dictionary format
     paths = convert_solution_to_dict(agents, raw_solution)
 
-    print("Formatted Paths for Each Agent:")
-    for agent, path in paths.items():
-        print(f"Agent {agent.id} Path:")
-        for step, pos in enumerate(path):
-            print(f"  Step {step}: Position {pos}")
-    print("---------------------------------------------------------------")
+    # # print("Formatted Paths for Each Agent:")
+    # for agent, path in paths.items():
+    #     print(f"Agent {agent.id} Path:")
+    #     for step, pos in enumerate(path):
+    #         print(f"  Step {step}: Position {pos}")
+    # print("---------------------------------------------------------------")
 
     # Visualize and handle the paths as required
     visualize_multi_path(screen, city_map, paths)
@@ -286,7 +295,7 @@ def run_input_file_screen(screen, level):
     text_rect = text_surface.get_rect(center=(SCREEN_WIDTH // 2, 50))
     screen.blit(text_surface, text_rect)
 
-    input_files = [f"input{i}_level{level}.txt" for i in range(1, 6)]
+    input_files = [f"Test case {level}.{i}" for i in range(1, 6)]
     buttons = []
     for i, input_file in enumerate(input_files):
         button_rect = draw_button(
@@ -295,6 +304,7 @@ def run_input_file_screen(screen, level):
             (SCREEN_WIDTH // 2 - BUTTON_WIDTH // 2, 100 + i * (BUTTON_HEIGHT + MARGIN)),
             (BUTTON_WIDTH, BUTTON_HEIGHT),
         )
+        input_file = f"input{i + 1}_level{level}.txt"
         buttons.append((input_file, button_rect))
 
     back_button = draw_button(
@@ -305,7 +315,7 @@ def run_input_file_screen(screen, level):
             100 + len(input_files) * (BUTTON_HEIGHT + MARGIN),
         ),
         (BUTTON_WIDTH, BUTTON_HEIGHT),
-        BLUE,
+        RED,
     )
 
     pygame.display.update()
@@ -328,36 +338,28 @@ def run_input_file_screen(screen, level):
 
 # Main function to run the simulation screen
 def run_simulation_screen(screen, level=None, input_file=None):
-    global timer_running
+    # global timer_running
 
     if level and input_file:
         filepath = f"../data/input/{input_file}"
         city_map = CityMap.from_file(filepath)
 
-        screen_width = city_map.cols * CELL_SIZE + INFO_BOX_WIDTH
-        screen_height = max(city_map.rows * CELL_SIZE, SCREEN_HEIGHT)
+        screen_width = city_map.cols * CELL_SIZE
+        screen_height = max(city_map.rows * CELL_SIZE, SCREEN_HEIGHT) + INFO_BOX_HEIGHT
         screen = pygame.display.set_mode((screen_width, screen_height))
         pygame.display.set_caption("Search Algorithm Visualization")
 
         font = pygame.font.SysFont(None, 24)
         draw_grid(screen, city_map, font)
-        draw_info_box(screen, city_map.cols * CELL_SIZE)
+        # draw_info_box(screen, city_map.cols * CELL_SIZE)
         pygame.display.update()
 
         output = f"../data/output/output{input_file.split('_')[0][-1]}_level{level}.txt"
-
-        start_time = time.time()
-        timer_running = True
-        timer_thread = threading.Thread(target=timer_function, args=(screen, city_map.cols, start_time))
-        timer_thread.start()
 
         if int(level) >= 1 and int(level) <= 3:
             single_agent(screen, city_map, output, int(level))
         else:
             multiple_agent(screen, city_map, output, filepath)
-
-        timer_running = False
-        timer_thread.join()
 
     running = True
     while running:
@@ -371,37 +373,6 @@ def run_simulation_screen(screen, level=None, input_file=None):
 
     pygame.quit()
     sys.exit()
-
-# Helper function to update the real-time timer on the screen
-def timer_function(screen, city_map_cols, start_time):
-    global timer_running
-    font = pygame.font.SysFont(None, 36)
-    
-    while timer_running:
-        elapsed_time = time.time() - start_time
-        timer_text_surface = font.render('{:.3f} s'.format(elapsed_time), True, BLACK)
-        timer_text_rect = timer_text_surface.get_rect(topleft=(city_map_cols * CELL_SIZE + 130, 150))
-        
-        # Clear the previous timer text
-        pygame.draw.rect(screen, WHITE, timer_text_rect)
-        screen.blit(timer_text_surface, timer_text_rect)
-        
-        pygame.display.update()
-        time.sleep(0.1)  # Update every 0.1 second
-
-
-# Helper function to draw the information box
-def draw_info_box(screen, width):
-    # Draw the background for the info box
-    info_box_rect = pygame.Rect(width, 0, INFO_BOX_WIDTH, INFO_BOX_HEIGHT)
-    pygame.draw.rect(screen, BACKGROUND_COLOR, info_box_rect)  # Set background to white
-
-    # Display information in the info box
-    font = pygame.font.SysFont(None, 36)
-
-    timer_text_surface = font.render('Time : ', True, BLACK)
-    timer_text_rect = timer_text_surface.get_rect(topleft=(width + 50, 150))
-    screen.blit(timer_text_surface, timer_text_rect)
 
 
 # Helper function to draw the grid on the screen
@@ -466,14 +437,35 @@ def draw_grid(screen, city_map: CityMap, font):
 
 
 # Helper function to visualize a single agent path on the screen
-def visualize_path(screen, next_button, all_button, exit_button, city_map: CityMap, path, color=PATH_COLOR):
+def visualize_path(
+    screen,
+    city_map: CityMap,
+    path,
+    color=PATH_COLOR,
+):
     if not path:
         return
+    # Add buttons
+    next_button = draw_next_button(screen)
+    all_button = draw_all_button(screen)
+    pygame.display.update()
+    pause = True
+    show_all = False
 
-    global pause, show_all, exit  
-    
     for i in range(len(path) - 1):
-        pause = True
+        while pause and not show_all:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    return
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    if next_button.collidepoint(event.pos):
+                        pause = False
+                    elif all_button.collidepoint(event.pos):
+                        show_all = True
+
+        if show_all:
+            all_button = draw_running_button(screen)
+            pygame.display.update()
 
         row1, col1 = path[i]
         row2, col2 = path[i + 1]
@@ -500,20 +492,24 @@ def visualize_path(screen, next_button, all_button, exit_button, city_map: CityM
 
         pygame.display.update()
 
-        while pause and not show_all:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    return
-                elif event.type == pygame.MOUSEBUTTONDOWN:
-                    if next_button.collidepoint(event.pos):
-                        pause = False
-                    elif all_button.collidepoint(event.pos):
-                        show_all = True
-                    elif exit_button.collidepoint(event.pos):
-                        exit = True
-                        return
+        if i == len(path) - 2:
+            show_all = True
+            # Update the next button to show "Done"
+            next_button = draw_done_button(screen)
+            all_button = draw_all_button(screen)
+            pygame.display.update()
 
         time.sleep(0.1)
+        pause = True
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if next_button.collidepoint(event.pos):
+                    return
+
 
 # Helper functions for visualizing multiple agents, calculate average color for overlapping paths
 def average_color(colors: List[Tuple[int, int, int]]) -> Tuple[int, int, int]:
@@ -530,10 +526,11 @@ def average_color(colors: List[Tuple[int, int, int]]) -> Tuple[int, int, int]:
     b = int(b_sum / len(colors))
     return (r, g, b)
 
+
 def visualize_multi_path(
     screen, city_map: CityMap, paths: Dict[Agent, List[Tuple[int, int]]]
 ):
-    global pause, show_all, exit    
+    global pause, show_all, exit
 
     max_steps = max(len(path) for path in paths.values())
     agent_colors = {
@@ -541,25 +538,8 @@ def visualize_multi_path(
     }
 
     # Add buttons
-    next_button = draw_button(
-        screen,
-        "Next",
-        (SCREEN_WIDTH - 150, 300),
-        (BUTTON_WIDTH, BUTTON_HEIGHT),
-    )
-    all_button = draw_button(
-        screen,
-        "All",
-        (SCREEN_WIDTH - 150, 380),
-        (BUTTON_WIDTH, BUTTON_HEIGHT),
-    )
-    exit_button = draw_button(
-        screen,
-        "Exit",
-        (SCREEN_WIDTH - 150, 460),
-        (BUTTON_WIDTH, BUTTON_HEIGHT),
-        RED
-    )
+    next_button = draw_next_button(screen)
+    all_button = draw_all_button(screen)
     pygame.display.update()
 
     step = 0
@@ -578,9 +558,8 @@ def visualize_multi_path(
                         pause = False
                     elif all_button.collidepoint(event.pos):
                         show_all = True
-                    elif exit_button.collidepoint(event.pos):
-                        exit = True
-                        return
+                        all_button = draw_running_button(screen)
+                        pygame.display.update()
         for agent, path in paths.items():
             if step < len(path):
                 pos = path[step]
@@ -655,11 +634,18 @@ def visualize_multi_path(
         if step == max_steps - 1:
             show_all = True
             # Update the next button to show "Done"
-            done_button = draw_button(
-                screen,
-                "Done",
-                (SCREEN_WIDTH - 150, 300),
-                (BUTTON_WIDTH, BUTTON_HEIGHT),
-                GREEN,
-            )
+            next_button = draw_done_button(screen)
             pygame.display.update()
+
+            all_button = draw_exit_button(screen)
+            pygame.display.update()
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if next_button.collidepoint(event.pos):
+                    return run_level_screen(get_screen())
+                if all_button.collidepoint(event.pos):
+                    return run_level_screen(get_screen())
