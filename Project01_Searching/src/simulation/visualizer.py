@@ -1,13 +1,10 @@
 import sys
 import time
 import pygame
-import threading
 from utils import format_path
-from multiagent.cbs import cbs
 from typing import List, Tuple, Dict
 from citymap import CityMap, CellType
-from simulation.multiple_agents import Agent
-from simulation.multiple_agents import get_agents
+from simulation.multiple_agents import Agent, get_agents, cbs
 from search_algorithms import bfs, dfs, ucs, gbfs, a_star
 
 # Constants

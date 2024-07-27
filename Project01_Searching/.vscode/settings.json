@@ -12,6 +12,8 @@
     "blit",
     "citymap",
     "gbfs",
+    "inputpath",
+    "outputpath",
     "pygame"
   ]
 }

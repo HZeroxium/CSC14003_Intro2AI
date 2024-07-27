@@ -1,5 +1,25 @@
 # Project01: Searching - Delivery System
 
+## How to run the program
+
+At `src/` directory:
+
+- 1. Run the following command to install the required packages:
+
+```bash
+    pip install -r requirements.txt
+```
+
+- 2. Run the program with the following command:
+
+```bash
+    python main.py
+```
+
+- 3. Follow the instructions on the console to select the input file and search algorithm.
+
+## Project Structure
+
 ``` less
 Project_DeliverySystem/
 │
@@ -18,7 +38,8 @@ Project_DeliverySystem/
 │       ├── __init__.py         # Indicates that this directory is a Python package
 │       ├── visualizer.py       # Visualization of search process
 │       └── multiple_agents.py  # Coordination mechanism for multiple agents
-│
+│   ├── requirements.txt        # Required packages for the project
+│   └── README.md               # Project description and instructions
 ├── data/                       # Input and output data
 │   ├── input/                  # Input data
 |   |   ├── input1_level1.txt   # Input data for level 1 of input 1
@@ -27,19 +48,7 @@ Project_DeliverySystem/
 |   |   ├── output1_level1.txt  # Output data for level 1 of input 1
 |   |   ├── output1_level2.txt  # Output data for level 2 of input 1
 │
-├── docs/                       # Documentation
-│   ├── Report.pdf              # Project report
-│   └── README.md               # Project description and instructions
-│
-├── requirements.txt            # Python dependencies
-├── setup.py                    # Setup script for the package
-└── tests/                      # Unit tests for the project
-    ├── test_bfs.py             # Unit tests for BFS algorithm
-    ├── test_dfs.py             # Unit tests for DFS algorithm
-    ├── test_ucs.py             # Unit tests for UCS algorithm
-    |── test_gbfs.py            # Unit tests for GBFS algorithm
-    ├── test_a_star.py          # Unit tests for A* algorithm
-    ├── test_simulation.py      # Unit tests for simulation
-    └── __init__.py             # Indicates that this directory is a Python package
+|── Report.pdf                  # Report for the project (included video URLs)
+
 
 ```
