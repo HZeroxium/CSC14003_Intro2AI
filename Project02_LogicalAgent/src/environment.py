@@ -51,7 +51,7 @@ class Element(Enum):
     PIT = "P"
     POISONOUS_GAS = "PG"
     HEALING_POTION = "HP"
-    SAFE = "-"
+    SAFE = None
 
 
 ELEMENT_TO_PERCEPT: Dict[Element, Percept] = {
@@ -59,31 +59,28 @@ ELEMENT_TO_PERCEPT: Dict[Element, Percept] = {
     Element.PIT: Percept.BREEZE,
     Element.GOLD: Percept.GLOW,
     Element.POISONOUS_GAS: Percept.WHIFF,
+    Element.AGENT: None,
     Element.HEALING_POTION: None,
-    Element.SAFE: None,
 }
 
 
 class Environment:
     def __init__(self, map_file: str):
-        self.map: List[List[Set[str]]] = list()
+        self.map: List[List[Set[Enum]]] = list()
         self.load_map(map_file)
         self.size = len(self.map)
 
     # Convert map cell (set of strings) to a string with ',' as separator except '-'
-    def cell_to_string(self, cell: Set[str]) -> str:
-        # Remove - from the cell
-        cell.discard("-")
-        return ", ".join(cell) if cell else ""
+    def cell_to_string(self, cell: Set[Enum]) -> str:
+        if cell:
+            return ", ".join([str(e.value) for e in cell if e is not None])
 
     # Update the neighbors of a given position based on the percept
-    def update_map_neighbors(self, position: Tuple[int, int], percept: str):
-        if percept is None:
-            return
+    def update_map_neighbors(self, position: Tuple[int, int], element: Element):
         x, y = position
+        percept = ELEMENT_TO_PERCEPT[element]
         for i, j in [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)]:
             if 0 <= i < len(self.map) and 0 <= j < len(self.map):
-                print(f"Updating neighbors of {position} with {percept}")
                 self.map[i][j].add(percept)
 
     def load_map(self, map_file):
@@ -91,30 +88,26 @@ class Environment:
             # Read raw data from the file
             n = int(file.readline().strip())
             map_data = [line.strip().split(".") for line in file]
-            print(map_data)
+            # print(map_data)
+
             # Initialize the map
             self.map = [[set() for _ in range(n)] for _ in range(n)]
             for i in range(n):
                 for j in range(n):
                     element = map_data[i][j]
-                    print("Adding", element)
-                    self.map[i][j].add(element)
-                    percept = ELEMENT_TO_PERCEPT.get(Element(element))
-                    if percept is not None:
-                        self.update_map_neighbors((i, j), percept.value)
+                    if element != "-":
+                        element = Element(element)
+                        self.map[i][j].add(element)
+                        self.update_map_neighbors((i, j), element)
 
     # Return percepts based on the current position
-    def get_percept(self, position):
+    def get_percept(self, position: Tuple[int, int]) -> List[Tuple[int, int, Percept]]:
         x, y = position
         percepts = []
-        if Percept.BREEZE in self.map[x][y]:
-            percepts.append((Percept.BREEZE, x, y))
-        if Percept.STENCH in self.map[x][y]:
-            percepts.append((Percept.STENCH, x, y))
-        if Percept.GLOW in self.map[x][y]:
-            percepts.append((Percept.GLOW, x, y))
-        if Percept.WHIFF in self.map[x][y]:
-            percepts.append((Percept.WHIFF, x, y))
+        for percept in Percept:
+            if percept in self.map[x][y]:
+                percepts.append((x, y, percept))
+
         return percepts
 
     def update(self, agent, action):
