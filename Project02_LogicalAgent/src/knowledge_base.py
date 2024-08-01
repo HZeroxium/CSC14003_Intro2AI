@@ -5,6 +5,21 @@ from typing import List, Tuple, Dict
 from enum import Enum
 from environment import Percept, Element, PERCEPT_TO_ELEMENT
 
+ENCODE_MAPPING: Dict[Enum, int] = {
+    Element.WUMPUS: 1,
+    Element.PIT: 2,
+    Element.GOLD: 3,
+    Element.POISONOUS_GAS: 4,
+    Element.AGENT: 5,
+    Element.HEALING_POTION: 6,
+    Percept.STENCH: 7,
+    Percept.BREEZE: 8,
+    Percept.GLOW: 9,
+    Percept.WHIFF: 10,
+}
+
+DECODE_MAPPING: Dict[int, Enum] = {v: k for k, v in ENCODE_MAPPING.items()}
+
 
 class KnowledgeBase:
     def __init__(self):
@@ -46,23 +61,16 @@ class KnowledgeBase:
     @staticmethod
     def encode(symbol: Enum, x: int, y: int) -> int:
         # Encode a logical variable uniquely
-        mapping: Dict[Enum, int] = {
-            Element.WUMPUS: 1,
-            Element.PIT: 2,
-            Element.GOLD: 3,
-            Element.POISONOUS_GAS: 4,
-            Element.AGENT: 5,
-            Element.HEALING_POTION: 6,
-            Percept.STENCH: 7,
-            Percept.BREEZE: 8,
-            Percept.GLOW: 9,
-            Percept.WHIFF: 10,
-        }
-        hash_value = mapping[symbol] * 100 + x * 10 + y
-        # Check if the hash value is overflown
-        if hash_value < 0:
-            return -hash_value
+        hash_value = ENCODE_MAPPING[symbol] * 100 + x * 10 + y
         return hash_value
+
+    @staticmethod
+    def decode(encoded: int) -> Tuple[Enum, int, int]:
+        # Decode a logical variable
+        symbol = DECODE_MAPPING[encoded // 100]
+        x = (encoded % 100) // 10
+        y = encoded % 10
+        return symbol, x, y
 
     def infer_new_knowledge(self):
         new_inferences = []
@@ -76,15 +84,15 @@ class KnowledgeBase:
                 new_inferences.extend(
                     self.infer_from_percept(Percept.BREEZE, x, y, grid_size)
                 )
-                # new_inferences.extend(
-                #     self.infer_from_percept(Percept.STENCH, x, y, grid_size)
-                # )
-                # new_inferences.extend(
-                #     self.infer_from_percept(Percept.GLOW, x, y, grid_size)
-                # )
-                # new_inferences.extend(
-                #     self.infer_from_percept(Percept.WHIFF, x, y, grid_size)
-                # )
+                new_inferences.extend(
+                    self.infer_from_percept(Percept.STENCH, x, y, grid_size)
+                )
+                new_inferences.extend(
+                    self.infer_from_percept(Percept.GLOW, x, y, grid_size)
+                )
+                new_inferences.extend(
+                    self.infer_from_percept(Percept.WHIFF, x, y, grid_size)
+                )
                 # Add more percepts as needed
 
         # Add new inferences to the knowledge base
