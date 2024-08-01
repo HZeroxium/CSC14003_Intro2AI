@@ -3,6 +3,7 @@
 from enum import Enum
 from typing import List, Tuple, Set, Dict
 import pygame  # type: ignore
+from agent import Action, Agent
 
 # **Input**: the given map is represented by matrix, which is stored in the input file, for example, map1.txt. The input file format is described as follows:
 
@@ -108,27 +109,54 @@ class Environment:
                         self.update_map_neighbors((i, j), element)
 
     # Return percepts based on the current position
-    def get_percept(self, position: Tuple[int, int]) -> List[Tuple[int, int, Percept]]:
+    def get_percept(self, position: Tuple[int, int]) -> List[Tuple[Percept, int, int]]:
         x, y = position
-        percepts = []
+        percepts: List[Tuple[int, int, Percept]] = []
         for percept in Percept:
             if percept in self.map[x][y]:
-                percepts.append((x, y, percept))
+                percepts.append((percept, x, y))
 
         return percepts
 
-    def update(self, agent, action):
-        if action == "move":
-            new_position = action[1]
-            agent.update_position(new_position)
-        elif action == "shoot":
-            self.handle_shoot(agent.position)
+    def get_map_size(self):
+        return self.size
+
+    def get_agent_position(self):
+        for i in range(self.size):
+            for j in range(self.size):
+                if Element.AGENT in self.map[i][j]:
+                    return (i, j)
+
+    def update(self, agent: Agent, actions: List[Tuple[Action, int, int]]):
+        for action, x, y in actions:
+            if action == Action.TURN_LEFT:
+                agent.turn_left()
+            elif action == Action.TURN_RIGHT:
+                agent.turn_right()
+            if action == Action.FORWARD:
+                agent.handle_forward((x, y))
+            elif action == Action.SHOOT:
+                agent.handle_shoot((x, y))
+                # Check if there is a Wumpus in the (x, y) position
+                self.handle_shoot((x, y))
+            elif action == Action.GRAB:
+                agent.handle_grab((x, y))
+                self.handle_grab((x, y))
 
     def handle_shoot(self, position):
         x, y = position
         # Handle the consequences of shooting (e.g., killing Wumpus)
         if "W" in self.map[x][y]:
             self.map[x][y] = self.map[x][y].replace("W", "")
+
+    def handle_grab(self, position):
+        x, y = position
+        # Handle the consequences of grabbing (e.g., picking up gold)
+        if "G" in self.map[x][y]:
+            self.map[x][y] = self.map[x][y].replace("G", "")
+        # Pick up the healing potion
+        if "HP" in self.map[x][y]:
+            self.map[x][y] = self.map[x][y].replace("HP", "")
 
     def draw_grid(self, screen):
         n = self.size
