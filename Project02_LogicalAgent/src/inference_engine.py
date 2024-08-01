@@ -23,6 +23,7 @@ class InferenceEngine:
 
     # Infer safe moves based on the current knowledge base with heuristics
     def infer_safe_moves(self, position: Tuple[int, int]) -> List[Tuple[int, int]]:
+        print("=== Infer Safe Moves ===")
         x, y = position
         directions = get_adjacent_cells(x, y, self.kb.grid_size)
         evaluated_moves = []

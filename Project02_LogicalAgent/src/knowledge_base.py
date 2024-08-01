@@ -3,7 +3,7 @@ from pysat.formula import CNF  # type: ignore
 from pysat.solvers import Solver  # type: ignore
 from typing import List, Tuple, Dict
 from enum import Enum
-from environment import Percept, Element, PERCEPT_TO_ELEMENT
+from utilities import Percept, Element, PERCEPT_TO_ELEMENT
 
 ENCODE_MAPPING: Dict[Enum, int] = {
     Element.WUMPUS: 1,
@@ -39,7 +39,8 @@ class KnowledgeBase:
 
     # Check if a literal is consistent with the knowledge base (i.e., not proven false)
     def query(self, literal: int) -> bool:
-        print("Querying: ", literal)
+        enum, x, y = self.decode(literal)
+        # print(f"Querying: {enum} at ({x}, {y})")
         # Temporary addition of the negation of the literal to check consistency
         is_satisfiable = self.solver.solve(assumptions=[-literal])
         return not is_satisfiable
@@ -49,13 +50,13 @@ class KnowledgeBase:
         for percept, x, y in percepts:
             # Example: Adding the fact 'B(x, y)' if a breeze is perceived
             if percept == Percept.BREEZE:
-                self.add_fact([self.encode(percept, x, y)])
+                self.add_clause([self.encode(percept, x, y)])
             if percept == Percept.STENCH:
-                self.add_fact([self.encode(percept, x, y)])
+                self.add_clause([self.encode(percept, x, y)])
             if percept == Percept.GLOW:
-                self.add_fact([self.encode(percept, x, y)])
+                self.add_clause([self.encode(percept, x, y)])
             if percept == Percept.WHIFF:
-                self.add_fact([self.encode(percept, x, y)])
+                self.add_clause([self.encode(percept, x, y)])
             # Add more percepts as needed
         self.infer_new_knowledge()
 
@@ -75,8 +76,7 @@ class KnowledgeBase:
 
     def infer_new_knowledge(self):
         new_inferences = []
-        # For simplicity, assuming a 4x4 grid. This can be adjusted as needed.
-        grid_size = 2
+        grid_size = self.grid_size
 
         # Iterate over all possible cells in the grid
         for x in range(grid_size):

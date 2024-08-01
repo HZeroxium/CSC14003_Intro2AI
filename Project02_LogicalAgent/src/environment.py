@@ -3,7 +3,13 @@
 from enum import Enum
 from typing import List, Tuple, Set, Dict
 import pygame  # type: ignore
-from agent import Action, Agent
+from utilities import (
+    Action,
+    Direction,
+    Element,
+    Percept,
+    ELEMENT_TO_PERCEPT,
+)
 
 # **Input**: the given map is represented by matrix, which is stored in the input file, for example, map1.txt. The input file format is described as follows:
 
@@ -37,46 +43,12 @@ GRID_COLOR = COLORS["BLACK"]
 BACKGROUND_COLOR = COLORS["WHITE"]
 
 
-class Percept(Enum):
-    BREEZE = "B"
-    STENCH = "S"
-    SCREAM = "SC"
-    WHIFF = "WF"
-    GLOW = "GL"
-
-
-class Element(Enum):
-    AGENT = "A"
-    WUMPUS = "W"
-    GOLD = "G"
-    PIT = "P"
-    POISONOUS_GAS = "PG"
-    HEALING_POTION = "HP"
-    SAFE = None
-
-
-ELEMENT_TO_PERCEPT: Dict[Element, Percept] = {
-    Element.WUMPUS: Percept.STENCH,
-    Element.PIT: Percept.BREEZE,
-    Element.GOLD: Percept.GLOW,
-    Element.POISONOUS_GAS: Percept.WHIFF,
-    Element.AGENT: None,
-    Element.HEALING_POTION: None,
-}
-
-PERCEPT_TO_ELEMENT: Dict[Percept, Element] = {
-    Percept.STENCH: Element.WUMPUS,
-    Percept.BREEZE: Element.PIT,
-    Percept.GLOW: Element.GOLD,
-    Percept.WHIFF: Element.POISONOUS_GAS,
-}
-
-
 class Environment:
     def __init__(self, map_file: str):
         self.map: List[List[Set[Enum]]] = list()
         self.load_map(map_file)
         self.size = len(self.map)
+        self.visited = [[False for _ in range(self.size)] for _ in range(self.size)]
 
     # Convert map cell (set of strings) to a string with ',' as separator except '-'
     def cell_to_string(self, cell: Set[Enum]) -> str:
@@ -109,7 +81,7 @@ class Environment:
                         self.update_map_neighbors((i, j), element)
 
     # Return percepts based on the current position
-    def get_percept(self, position: Tuple[int, int]) -> List[Tuple[Percept, int, int]]:
+    def get_percept(self, position: Tuple[int, int]) -> List[Tuple[Enum, int, int]]:
         x, y = position
         percepts: List[Tuple[int, int, Percept]] = []
         for percept in Percept:
@@ -117,6 +89,14 @@ class Environment:
                 percepts.append((percept, x, y))
 
         return percepts
+
+    def get_element(self, position: Tuple[int, int]) -> List[Tuple[Element, int, int]]:
+        elements: List[Element] = []
+        x, y = position
+        for element in Element:
+            if element in self.map[x][y] and element != Element.AGENT:
+                elements.append((element, x, y))
+        return elements
 
     def get_map_size(self):
         return self.size
@@ -127,36 +107,66 @@ class Environment:
                 if Element.AGENT in self.map[i][j]:
                     return (i, j)
 
-    def update(self, agent: Agent, actions: List[Tuple[Action, int, int]]):
+    def update(
+        self, agent, actions: List[Tuple[Action, int, int]]
+    ) -> List[Tuple[Element, int, int]]:
+        new_elements: List[Tuple[Enum, int, int]] = []
         for action, x, y in actions:
             if action == Action.TURN_LEFT:
-                agent.turn_left()
+                agent.current_direction = agent.turn_left(agent.current_direction)
             elif action == Action.TURN_RIGHT:
-                agent.turn_right()
+                agent.current_direction = agent.turn_right(agent.current_direction)
             if action == Action.FORWARD:
                 agent.handle_forward((x, y))
+                self.visited[x][y] = True
+                if "P" in self.map[x][y]:
+                    agent.game_over = True
+                    return
+                if "W" in self.map[x][y]:
+                    agent.game_over = True
+                    return
+                if "PG" in self.map[x][y]:
+                    agent.health -= 25
+                    return
+
             elif action == Action.SHOOT:
                 agent.handle_shoot((x, y))
                 # Check if there is a Wumpus in the (x, y) position
-                self.handle_shoot((x, y))
+                if self.handle_shoot((x, y), agent.current_direction):
+                    new_elements.append((Element.WUMPUS, x, y))
             elif action == Action.GRAB:
                 agent.handle_grab((x, y))
                 self.handle_grab((x, y))
+        return new_elements
 
-    def handle_shoot(self, position):
-        x, y = position
+    def handle_shoot(self, position, direction: Direction) -> bool:
+        x, y = position  # Position to shoot (Agent thinks there is a Wumpus)
         # Handle the consequences of shooting (e.g., killing Wumpus)
         if "W" in self.map[x][y]:
             self.map[x][y] = self.map[x][y].replace("W", "")
+            # Add a SCREAM percept at agent's position to indicate the Wumpus is killed
+            if direction == Direction.UP:
+                self.map[x][y - 1].add(Percept.SCREAM)
+            elif direction == Direction.DOWN:
+                self.map[x][y + 1].add(Percept.SCREAM)
+            elif direction == Direction.LEFT:
+                self.map[x - 1][y].add(Percept.SCREAM)
+            elif direction == Direction.RIGHT:
+                self.map[x + 1][y].add(Percept.SCREAM)
+            return True
+        return False
 
-    def handle_grab(self, position):
+    def handle_grab(self, position: Tuple[int, int]) -> Element:
         x, y = position
         # Handle the consequences of grabbing (e.g., picking up gold)
         if "G" in self.map[x][y]:
             self.map[x][y] = self.map[x][y].replace("G", "")
+            return Element.GOLD
         # Pick up the healing potion
         if "HP" in self.map[x][y]:
             self.map[x][y] = self.map[x][y].replace("HP", "")
+            return Element.HEALING_POTION
+        return None
 
     def draw_grid(self, screen):
         n = self.size

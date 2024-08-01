@@ -2,24 +2,8 @@
 
 from knowledge_base import KnowledgeBase
 from inference_engine import InferenceEngine
-from typing import Tuple, List
-from environment import Percept
-from enum import Enum
-
-
-class Action(Enum):
-    FORWARD = "forward"
-    TURN_LEFT = "turn_left"
-    TURN_RIGHT = "turn_right"
-    SHOOT = "shoot"
-    GRAB = "grab"
-
-
-class Direction(Enum):
-    UP = "up"
-    DOWN = "down"
-    LEFT = "left"
-    RIGHT = "right"
+from typing import Tuple, List, Set
+from utilities import Action, Direction, Percept, Element
 
 
 class Agent:
@@ -30,18 +14,33 @@ class Agent:
         grid_size: int = 4,
     ):
         self.knowledge_base = KnowledgeBase(grid_size=grid_size)
-        self.inference_engine = InferenceEngine()
+        self.inference_engine = InferenceEngine(knowledge_base=self.knowledge_base)
         self.position = initial_position
         self.health = health
         self.grid_size = grid_size
         self.score = 0
         self.game_over = False
-        self.current_direction = Direction.UP
+        self.current_direction = Direction.NORTH
+        self.current_percepts: Set[Percept] = set()
+        self.current_action: List[Tuple[Action, int, int]] = []
 
     # Main function to choose the next action
-    def choose_action(self, percepts: List[Tuple[Percept, int, int]]) -> str:
+    def choose_action(
+        self,
+        percepts: List[Tuple[Percept, int, int]],
+        elements: List[Tuple[Element, int, int]],
+    ) -> str:
+        # Update the current percepts
+        self.current_percepts.clear()
+        for percept, x, y in percepts:
+            self.current_percepts.add(percept)
+
         # Use inference to decide the next action
         self.knowledge_base.update(percepts)
+        # print("=============> Current percepts: ", self.current_percepts)
+        print("=============> Current elements: ", elements)
+        for element, x, y in elements:
+            self.knowledge_base.add_clause([self.knowledge_base.encode(element, x, y)])
         safe_moves = self.inference_engine.infer_safe_moves(self.position)
         return self.select_action(safe_moves)
 
@@ -55,28 +54,36 @@ class Agent:
             return "end"
         else:
             next_position = safe_moves[0]
+            print("=============> Current position: ", self.position)
+            print("=============> Current direction: ", self.current_direction)
+            print("=============> Safe moves: ", safe_moves)
+            print("=============> Next position: ", next_position)
             target_direction: Direction = get_target_direction(
                 self.position, next_position
             )
+            print("=============> Target direction: ", target_direction)
             turn_actions: List[Action] = get_actions(
                 self.current_direction, target_direction
             )
-            self.current_direction = target_direction
-            actions: List[Tuple[Action, int, int]] = []
+            # self.current_direction = target_direction
+            # print("=============> Current position: ", self.position)
+            # print("=============> Current direction: ", self.current_direction)
+            # Reset the current action
+            self.current_action = []
             # Perform the turn left, turn right actions to align the direction
-            actions.extend(
+            self.current_action.extend(
                 [
                     (action, self.position[0], self.position[1])
                     for action in turn_actions
                 ]
             )
-            # Move forward
-            actions.append((Action.FORWARD, self.position[0], self.position[1]))
-            return actions
+            print("=============> Current action: ", self.current_action)
+            return self.current_action
 
-    # Update the knowledge base with the new percept
-    def update_knowledge(self, percept):
-        self.knowledge_base.update(percept)
+    # Update the knowledge base with the new elements
+    def update_knowledge(self, new_elements: List[Tuple[Element, int, int]]):
+        for element, x, y in new_elements:
+            self.knowledge_base.add_clause([self.knowledge_base.encode(element, x, y)])
 
     def log_action(self, action):
         # Log the action taken
@@ -89,31 +96,39 @@ class Agent:
         return self.score
 
     def handle_forward(self, position: Tuple[int, int]):
-        self.position = position
+        # Move forward from the current position with current direction
+        print("Current direction: ", self.current_direction)
+        if self.current_direction == Direction.NORTH:  # Move up
+            self.position = (position[0] - 1, position[1])
+        elif self.current_direction == Direction.SOUTH:  # Move down
+            self.position = (position[0] + 1, position[1])
+        elif self.current_direction == Direction.WEST:  # Move left
+            self.position = (position[0], position[1] - 1)
+        elif self.current_direction == Direction.EAST:  # Move right
+            self.position = (position[0], position[1] + 1)
 
     def turn_left(self, direction: Direction) -> Direction:
-        if direction == Direction.UP:
-            return Direction.LEFT
-        elif direction == Direction.DOWN:
-            return Direction.RIGHT
-        elif direction == Direction.LEFT:
-            return Direction.DOWN
-        elif direction == Direction.RIGHT:
-            return Direction.UP
+        if direction == Direction.NORTH:
+            return Direction.WEST
+        elif direction == Direction.SOUTH:
+            return Direction.EAST
+        elif direction == Direction.WEST:
+            return Direction.SOUTH
+        elif direction == Direction.EAST:
+            return Direction.NORTH
 
     def turn_right(self, direction: Direction) -> Direction:
-        if direction == Direction.UP:
-            return Direction.RIGHT
-        elif direction == Direction.DOWN:
-            return Direction.LEFT
-        elif direction == Direction.LEFT:
-            return Direction.UP
-        elif direction == Direction.RIGHT:
-            return Direction.DOWN
+        if direction == Direction.NORTH:
+            return Direction.EAST
+        elif direction == Direction.SOUTH:
+            return Direction.WEST
+        elif direction == Direction.WEST:
+            return Direction.NORTH
+        elif direction == Direction.EAST:
+            return Direction.SOUTH
 
     def handle_shoot(self, position: Tuple[int, int]):
-        # Check if there is a Wumpus in the (x, y) position
-        pass
+        self.score -= 100
 
     def handle_grab(self, position: Tuple[int, int]):
         is_healing_potion = self.inference_engine.infer_healing_potion(position)
@@ -126,6 +141,20 @@ class Agent:
         if is_gold:
             self.score += 5000
 
+    def get_percept_string(self):
+        percept_string = ""
+        for percept in self.current_percepts:
+            percept_string += f"{percept.name} "
+
+        return percept_string
+
+    def get_action_string(self):
+        action_string = ""
+        for action in self.current_action:
+            action_string += f"{action[0].name} "
+
+        return action_string
+
 
 # Helper function to get list of actions based on the current direction and the target direction
 def get_actions(
@@ -135,36 +164,36 @@ def get_actions(
     if current_direction == target_direction:
         actions.append(Action.FORWARD)
     else:
-        if current_direction == Direction.UP:
-            if target_direction == Direction.LEFT:
+        if current_direction == Direction.NORTH:
+            if target_direction == Direction.WEST:
                 actions.append(Action.TURN_LEFT)
-            elif target_direction == Direction.RIGHT:
+            elif target_direction == Direction.EAST:
                 actions.append(Action.TURN_RIGHT)
-            elif target_direction == Direction.DOWN:
+            elif target_direction == Direction.SOUTH:
                 actions.append(Action.TURN_LEFT)
                 actions.append(Action.TURN_LEFT)
-        elif current_direction == Direction.DOWN:
-            if target_direction == Direction.LEFT:
+        elif current_direction == Direction.SOUTH:
+            if target_direction == Direction.WEST:
                 actions.append(Action.TURN_RIGHT)
-            elif target_direction == Direction.RIGHT:
+            elif target_direction == Direction.EAST:
                 actions.append(Action.TURN_LEFT)
-            elif target_direction == Direction.UP:
+            elif target_direction == Direction.NORTH:
                 actions.append(Action.TURN_LEFT)
                 actions.append(Action.TURN_LEFT)
-        elif current_direction == Direction.LEFT:
-            if target_direction == Direction.UP:
+        elif current_direction == Direction.WEST:
+            if target_direction == Direction.NORTH:
                 actions.append(Action.TURN_RIGHT)
-            elif target_direction == Direction.DOWN:
+            elif target_direction == Direction.SOUTH:
                 actions.append(Action.TURN_LEFT)
-            elif target_direction == Direction.RIGHT:
+            elif target_direction == Direction.EAST:
                 actions.append(Action.TURN_LEFT)
                 actions.append(Action.TURN_LEFT)
-        elif current_direction == Direction.RIGHT:
-            if target_direction == Direction.UP:
+        elif current_direction == Direction.EAST:
+            if target_direction == Direction.NORTH:
                 actions.append(Action.TURN_LEFT)
-            elif target_direction == Direction.DOWN:
+            elif target_direction == Direction.SOUTH:
                 actions.append(Action.TURN_RIGHT)
-            elif target_direction == Direction.LEFT:
+            elif target_direction == Direction.WEST:
                 actions.append(Action.TURN_LEFT)
                 actions.append(Action.TURN_LEFT)
         actions.append(Action.FORWARD)
@@ -179,11 +208,11 @@ def get_target_direction(
     x2, y2 = target_position
     if x1 == x2:
         if y2 > y1:
-            return Direction.RIGHT
+            return Direction.EAST
         else:
-            return Direction.LEFT
+            return Direction.WEST
     elif y1 == y2:
         if x2 > x1:
-            return Direction.DOWN
+            return Direction.SOUTH
         else:
-            return Direction.UP
+            return Direction.NORTH
