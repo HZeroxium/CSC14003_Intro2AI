@@ -22,11 +22,12 @@ DECODE_MAPPING: Dict[int, Enum] = {v: k for k, v in ENCODE_MAPPING.items()}
 
 
 class KnowledgeBase:
-    def __init__(self):
+    def __init__(self, grid_size: int = 4):
         self.facts = (
             CNF()
         )  # Conjunctive Normal Form of the knowledge base (list of clauses)
         self.solver = Solver(name="glucose4")  # SAT solver
+        self.grid_size = grid_size
 
     def add_clause(self, rule: List[int]):
         self.facts.append(
