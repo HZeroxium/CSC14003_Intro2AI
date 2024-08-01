@@ -2,20 +2,27 @@
 
 from knowledge_base import KnowledgeBase
 from inference_engine import InferenceEngine
+from typing import Tuple, List
+from environment import Percept
 
 
 class Agent:
-    def __init__(self):
+    def __init__(
+        self,
+        initial_position: Tuple[int, int] = (0, 0),
+        health: int = 100,
+    ):
         self.knowledge_base = KnowledgeBase()
         self.inference_engine = InferenceEngine()
-        self.position = (0, 0)
+        self.position = initial_position
+        self.health = health
         self.score = 0
         self.game_over = False
 
-    def choose_action(self, percept):
+    def choose_action(self, percepts: List[Tuple[int, int, Percept]]):
         # Use inference to decide the next action
-        self.knowledge_base.update(percept)
-        safe_moves = self.inference_engine.get_safe_moves(self.position)
+        self.knowledge_base.update(percepts)
+        safe_moves = self.inference_engine.infer_safe_moves(self.position)
         return self.select_action(safe_moves)
 
     def select_action(self, safe_moves):
