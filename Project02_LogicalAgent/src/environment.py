@@ -63,6 +63,13 @@ ELEMENT_TO_PERCEPT: Dict[Element, Percept] = {
     Element.HEALING_POTION: None,
 }
 
+PERCEPT_TO_ELEMENT: Dict[Percept, Element] = {
+    Percept.STENCH: Element.WUMPUS,
+    Percept.BREEZE: Element.PIT,
+    Percept.GLOW: Element.GOLD,
+    Percept.WHIFF: Element.POISONOUS_GAS,
+}
+
 
 class Environment:
     def __init__(self, map_file: str):
