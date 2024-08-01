@@ -3,7 +3,7 @@ from pysat.formula import CNF  # type: ignore
 from pysat.solvers import Solver  # type: ignore
 from typing import List, Tuple, Dict
 from enum import Enum
-from environment import Percept, Element
+from environment import Percept, Element, PERCEPT_TO_ELEMENT
 
 
 class KnowledgeBase:
@@ -12,26 +12,14 @@ class KnowledgeBase:
             CNF()
         )  # Conjunctive Normal Form of the knowledge base (list of clauses)
         self.solver = Solver(name="glucose4")  # SAT solver
-        self.add_rules()  # Add initial rules to the knowledge base
 
-    def add_fact(self, fact: List[int]):
-        self.facts.append(
-            fact
-        )  # Add the fact to the knowledge base. Example: [B(x, y)]
-        self.solver.add_clause(
-            fact
-        )  # Add the fact to the SAT solver. Example: [B(x, y)]
-
-    def add_rule(self, rule: List[int]):
+    def add_clause(self, rule: List[int]):
         self.facts.append(
             rule
         )  # Add the rule to the knowledge base. Example: [B(x, y) | B(x+1, y)]
         self.solver.add_clause(
             rule
         )  # Add the rule to the SAT solver. Example: [B(x, y) | B(x+1, y)]
-
-    def add_rules(self):
-        pass
 
     # Check if a literal is consistent with the knowledge base (i.e., not proven false)
     def query(self, literal: int) -> bool:
@@ -79,145 +67,82 @@ class KnowledgeBase:
     def infer_new_knowledge(self):
         new_inferences = []
         # For simplicity, assuming a 4x4 grid. This can be adjusted as needed.
-        grid_size = 3
+        grid_size = 2
 
         # Iterate over all possible cells in the grid
         for x in range(grid_size):
             for y in range(grid_size):
-                # Check for Breezes and infer about Pits
-                print("=====================================")
-                adjacent_cells = [
-                    (x + 1, y),
-                    (x - 1, y),
-                    (x, y + 1),
-                    (x, y - 1),
-                ]
-
-                # Remove unreachable cells
-
-                adjacent_cells = [
-                    (i, j)
-                    for i, j in adjacent_cells
-                    if i >= 0 and i < grid_size and j >= 0 and j < grid_size
-                ]
-
-                if self.query(self.encode(Percept.BREEZE, x, y)):
-                    # Breeze(x,y) <=> Pit(x+1,y) | Pit(x-1,y) | Pit(x,y+1) | Pit(x,y-1)
-                    # B <=> P1 | P2 | P3 | P4
-                    # Convert to CNF:
-                    # (!B | P1 | P2 | P3 | P4) & (B | !P1) & (B | !P2) & (B | !P3) & (B | !P4)
-                    possible_pit_locations = [
-                        self.encode(Element.PIT, i, j) for i, j in adjacent_cells
-                    ]
-
-                    # Add rule to knowledge base
-                    # Add (!B | P1 | P2 | P3 | P4)
-                    rule = [-self.encode(Percept.BREEZE, x, y)] + possible_pit_locations
-                    print("Adding rule: ", rule)
-                    self.add_rule(rule)
-                    # Add (B | !P1) & (B | !P2) & (B | !P3) & (B | !P4)
-                    for pit in possible_pit_locations:
-                        rule = [self.encode(Percept.BREEZE, x, y), -pit]
-                        print("Adding rule: ", rule)
-                        self.add_rule(rule)
-
-                    print("With breeze at: ", x, y)
-                    print("Possible pit locations: ", possible_pit_locations)
-                    for pit in possible_pit_locations:
-                        if self.query(pit):  # If it's not proven false
-                            print("Adding pit: ", pit)
-                            new_inferences.append(
-                                [pit]
-                            )  # Add the inferred pit to new inferences
-
-                # if not self.query(self.encode(Percept.BREEZE, x, y)):
-                #     possible_safe_locations = [
-                #         self.encode(Element.SAFE, i, j) for i, j in adjacent_cells
-                #     ]
-                #     print("Without breeze at: ", x, y)
-                #     print("Possible safe locations: ", possible_safe_locations)
-                #     for safe in possible_safe_locations:
-                #         if not self.query(safe):
-                #             pass
-                # # Check for Stenches and infer about Wumpus
-                # if self.query(self.encode(Percept.STENCH, x, y)):
-                #     possible_wumpus_locations = [
-                #         self.encode(Element.WUMPUS, x + 1, y),
-                #         self.encode(Element.WUMPUS, x - 1, y),
-                #         self.encode(Element.WUMPUS, x, y + 1),
-                #         self.encode(Element.WUMPUS, x, y - 1),
-                #     ]
-                #     for wumpus in possible_wumpus_locations:
-                #         if not self.query(wumpus):  # If it's not proven false
-                #             new_inferences.append([wumpus])
-
-                # # Check for Glows and infer about Gold
-                # if self.query(self.encode(Percept.GLOW, x, y)):
-                #     possible_gold_locations = [
-                #         self.encode(Element.GOLD, x + 1, y),
-                #         self.encode(Element.GOLD, x - 1, y),
-                #         self.encode(Element.GOLD, x, y + 1),
-                #         self.encode(Element.GOLD, x, y - 1),
-                #     ]
-                #     for gold in possible_gold_locations:
-                #         if not self.query(gold):  # If it's not proven false
-                #             new_inferences.append([gold])
-
-                # # Check for Whiffs and infer about Poisonous Gas
-                # if self.query(self.encode(Percept.WHIFF, x, y)):
-                #     possible_pg_locations = [
-                #         self.encode(Element.POISONOUS_GAS, x + 1, y),
-                #         self.encode(Element.POISONOUS_GAS, x - 1, y),
-                #         self.encode(Element.POISONOUS_GAS, x, y + 1),
-                #         self.encode(Element.POISONOUS_GAS, x, y - 1),
-                #     ]
-                #     for pg in possible_pg_locations:
-                #         if not self.query(pg):  # If it's not proven false
-                #             new_inferences.append([pg])
+                # Infer new knowledge based on the percept
+                new_inferences.extend(
+                    self.infer_from_percept(Percept.BREEZE, x, y, grid_size)
+                )
+                # new_inferences.extend(
+                #     self.infer_from_percept(Percept.STENCH, x, y, grid_size)
+                # )
+                # new_inferences.extend(
+                #     self.infer_from_percept(Percept.GLOW, x, y, grid_size)
+                # )
+                # new_inferences.extend(
+                #     self.infer_from_percept(Percept.WHIFF, x, y, grid_size)
+                # )
+                # Add more percepts as needed
 
         # Add new inferences to the knowledge base
         for inference in new_inferences:
-            self.add_fact(inference)
+            self.add_clause(inference)
+
+    # Helper function to infer from percept
+    def infer_from_percept(self, percept: Percept, x: int, y: int, grid_size: int):
+        # Infer new knowledge based on the percept
+        # Denote: Percept = P, Element = E
+        # Rule: P(x,y) <=> E(x+1,y) | E(x-1,y) | E(x,y+1) | E(x,y-1)
+        # Convert to CNF:
+        # (!P | E1 | E2 | E3 | E4) & (P | !E1) & (P | !E2) & (P | !E3) & (P | !E4)
+
+        percept_location_encoded = self.encode(percept, x, y)
+        new_inferences = []
+        if self.query(percept_location_encoded):
+            adjacent_cells = [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)]
+            adjacent_cells = [
+                (i, j)
+                for i, j in adjacent_cells
+                if 0 <= i < grid_size and 0 <= j < grid_size
+            ]
+
+            element = PERCEPT_TO_ELEMENT[percept]
+
+            percept_location_encoded = self.encode(percept, x, y)
+            possible_element_locations_encoded = [
+                self.encode(element, i, j) for i, j in adjacent_cells
+            ]
+
+            # Add rule (!P | E1 | E2 | E3 | E4) to the knowledge base
+            rule = [-percept_location_encoded] + possible_element_locations_encoded
+            print("+ Adding rule: ", rule)
+            self.add_clause(rule)
+
+            # Add rules (P | !E1) & (P | !E2) & (P | !E3) & (P | !E4) to the knowledge base
+            for element_location_encoded in possible_element_locations_encoded:
+                rule = [percept_location_encoded, -element_location_encoded]
+                self.add_clause(rule)
+                if self.query(element_location_encoded):
+                    new_inferences.append([element_location_encoded])
+                    print("====> Inferred: ", element_location_encoded)
+
+        return new_inferences
 
 
 def main():
     knowledge_base = KnowledgeBase()
-    # Create a simple knowledge base that can infer about there being a pit in (0, 0)
-
-    # .P.B.-.-
-    # .B.-.-.-
-    # .-.-.-.-
-    # .-.-.-.-
-
-    # if knowledge_base.query(knowledge_base.encode(Percept.BREEZE, 0, 0)):
-    #     print("Breeze at (0, 0) is consistent with the knowledge base.")
-
-    # knowledge_base.add_fact([knowledge_base.encode(Percept.BREEZE, 0, 0)])
-    # if knowledge_base.query(knowledge_base.encode(Percept.BREEZE, 0, 0)):
-    #     print("Breeze at (0, 0) is consistent with the knowledge base.")
-
-    # knowledge_base.infer_new_knowledge()
-
-    # if knowledge_base.query(knowledge_base.encode(Percept.BREEZE, 0, 0)):
-    #     print("Breeze at (0, 0) is consistent with the knowledge base.")
 
     # With 2x2 grid, if there is a breeze at (1, 0) and (0, 1), and (1, 1) is safe, then there is a pit at (0, 0)
-    knowledge_base.add_fact([knowledge_base.encode(Percept.BREEZE, 0, 1)])
-    knowledge_base.add_fact([knowledge_base.encode(Percept.BREEZE, 1, 0)])
-    knowledge_base.add_fact([-knowledge_base.encode(Element.PIT, 1, 1)])
+    knowledge_base.add_clause([knowledge_base.encode(Percept.BREEZE, 0, 1)])
+    knowledge_base.add_clause([knowledge_base.encode(Percept.BREEZE, 1, 0)])
+    knowledge_base.add_clause([-knowledge_base.encode(Element.PIT, 1, 1)])
     knowledge_base.infer_new_knowledge()
 
     if knowledge_base.query(knowledge_base.encode(Element.PIT, 0, 0)):
         print("Pit at (0, 0) is consistent with the knowledge base.")
-    # if knowledge_base.query(knowledge_base.encode(Percept.BREEZE, 0, 1)):
-    #     print("Breeze at (0, 1) is consistent with the knowledge base.")
-
-    # if knowledge_base.query(knowledge_base.encode(Percept.BREEZE, 1, 0)):
-    #     print("Breeze at (1, 0) is consistent with the knowledge base.")
-    # knowledge_base.infer_new_knowledge()
-
-    # knowledge_base.add_fact([knowledge_base.encode(Percept.BREEZE, 1, 0)])
-    # knowledge_base.infer_new_knowledge()
 
 
 if __name__ == "__main__":
