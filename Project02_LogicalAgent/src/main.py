@@ -12,10 +12,10 @@ def main():
 
     # Main loop
     while not agent.is_game_over():
-        percept = env.get_percept(agent.position)
-        action = agent.choose_action(percept)
+        percepts = env.get_percept(agent.position)
+        action = agent.choose_action(percepts)
         env.update(agent, action)
-        agent.update_knowledge(percept)
+        agent.update_knowledge(percepts)
         agent.log_action(action)
 
     print(f"Final Score: {agent.get_score()}")
