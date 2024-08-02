@@ -1,6 +1,6 @@
 from environment import Percept, Element
 from knowledge_base import KnowledgeBase
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Set
 
 # Define heuristic values
 HEURISTIC_VALUES = {
@@ -22,25 +22,44 @@ class InferenceEngine:
         self.kb = knowledge_base
 
     # Infer safe moves based on the current knowledge base with heuristics
-    def infer_safe_moves(self, position: Tuple[int, int]) -> List[Tuple[int, int]]:
-        print("=== Infer Safe Moves ===")
+    def infer_safe_moves(
+        self,
+        position: Tuple[int, int],
+        grabbed_gold: Set[Tuple[int, int]],
+        grabbed_HP: Set[Tuple[int, int]],
+        visited: Set[Tuple[int, int]],
+    ) -> List[Tuple[int, int]]:
+        print("======== InferenceEngine: Infer Safe Moves =================")
         x, y = position
         directions = get_adjacent_cells(x, y, self.kb.grid_size)
         evaluated_moves = []
 
+        # Check if current cell contains a healing potion
+        if self.infer_healing_potion(position) and position not in grabbed_HP:
+            evaluated_moves.append((position, HEURISTIC_VALUES[Element.HEALING_POTION]))
+            print("Healing potion found at: ", position)
+
+        # Check if current cell contains gold
+        if self.infer_gold(position) and position not in grabbed_gold:
+            evaluated_moves.append((position, HEURISTIC_VALUES[Element.GOLD]))
+            print("Gold found at: ", position)
+
         for i, j in directions:
-            if self.is_safe(i, j):
+            if self.is_safe(i, j) and (i, j) not in visited:
                 heuristic_value = self.evaluate_heuristic(i, j)
                 evaluated_moves.append(((i, j), heuristic_value))
 
         # Sort moves by their heuristic value (descending)
         evaluated_moves.sort(key=lambda x: x[1], reverse=True)
+        print("=================================================================")
         # Return the best move
         return [move for move, _ in evaluated_moves]
 
     def is_safe(self, x: int, y: int) -> bool:
         is_pit = self.kb.query(self.kb.encode(Element.PIT, x, y))
         is_wumpus = self.kb.query(self.kb.encode(Element.WUMPUS, x, y))
+        if is_pit or is_wumpus:
+            print(f"Cell ({x}, {y}) is not safe")
         return not is_pit and not is_wumpus
 
     def evaluate_heuristic(self, x: int, y: int) -> int:

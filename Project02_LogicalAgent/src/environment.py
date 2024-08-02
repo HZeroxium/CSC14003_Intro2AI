@@ -90,13 +90,19 @@ class Environment:
 
         return percepts
 
-    def get_element(self, position: Tuple[int, int]) -> List[Tuple[Element, int, int]]:
-        elements: List[Element] = []
+    def get_element(self, position: Tuple[int, int]) -> Tuple[Element, int, int]:
+        element: Element = None
         x, y = position
-        for element in Element:
-            if element in self.map[x][y] and element != Element.AGENT:
-                elements.append((element, x, y))
-        return elements
+        for element_ in Element:
+            if (
+                element_ in self.map[x][y]
+                and element_ != Element.AGENT
+                and element_ != Element.SAFE
+            ):
+                element = element_
+        if element is None:
+            return None
+        return element, x, y
 
     def get_map_size(self):
         return self.size
@@ -109,8 +115,8 @@ class Environment:
 
     def update(
         self, agent, actions: List[Tuple[Action, int, int]]
-    ) -> List[Tuple[Element, int, int]]:
-        new_elements: List[Tuple[Enum, int, int]] = []
+    ) -> Tuple[Percept, int, int]:
+        new_percept: Percept = None
         for action, x, y in actions:
             if action == Action.TURN_LEFT:
                 agent.current_direction = agent.turn_left(agent.current_direction)
@@ -119,13 +125,13 @@ class Environment:
             if action == Action.FORWARD:
                 agent.handle_forward((x, y))
                 self.visited[x][y] = True
-                if "P" in self.map[x][y]:
+                if Element.PIT in self.map[x][y]:
                     agent.game_over = True
                     return
-                if "W" in self.map[x][y]:
+                if Element.WUMPUS in self.map[x][y]:
                     agent.game_over = True
                     return
-                if "PG" in self.map[x][y]:
+                if Element.POISONOUS_GAS in self.map[x][y]:
                     agent.health -= 25
                     return
 
@@ -133,11 +139,12 @@ class Environment:
                 agent.handle_shoot((x, y))
                 # Check if there is a Wumpus in the (x, y) position
                 if self.handle_shoot((x, y), agent.current_direction):
-                    new_elements.append((Element.WUMPUS, x, y))
+                    new_percept = Percept.SCREAM
             elif action == Action.GRAB:
+                print("Grabbing...")
                 agent.handle_grab((x, y))
                 self.handle_grab((x, y))
-        return new_elements
+        return new_percept
 
     def handle_shoot(self, position, direction: Direction) -> bool:
         x, y = position  # Position to shoot (Agent thinks there is a Wumpus)
@@ -159,12 +166,13 @@ class Environment:
     def handle_grab(self, position: Tuple[int, int]) -> Element:
         x, y = position
         # Handle the consequences of grabbing (e.g., picking up gold)
-        if "G" in self.map[x][y]:
-            self.map[x][y] = self.map[x][y].replace("G", "")
+        if Element.GOLD in self.map[x][y]:
+            self.map[x][y].remove(Element.GOLD)
+            print("Current cell: ", self.map[x][y])
             return Element.GOLD
         # Pick up the healing potion
-        if "HP" in self.map[x][y]:
-            self.map[x][y] = self.map[x][y].replace("HP", "")
+        if Element.HEALING_POTION in self.map[x][y]:
+            self.map[x][y].remove(Element.HEALING_POTION)
             return Element.HEALING_POTION
         return None
 

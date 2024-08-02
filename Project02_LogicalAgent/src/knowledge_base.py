@@ -16,6 +16,7 @@ ENCODE_MAPPING: Dict[Enum, int] = {
     Percept.BREEZE: 8,
     Percept.GLOW: 9,
     Percept.WHIFF: 10,
+    Element.SAFE: 11,
 }
 
 DECODE_MAPPING: Dict[int, Enum] = {v: k for k, v in ENCODE_MAPPING.items()}
@@ -28,6 +29,27 @@ class KnowledgeBase:
         )  # Conjunctive Normal Form of the knowledge base (list of clauses)
         self.solver = Solver(name="glucose4")  # SAT solver
         self.grid_size = grid_size
+        # self.initialize_knowledge_base()
+
+    def initialize_knowledge_base(self):
+        for x in range(self.grid_size):
+            for y in range(self.grid_size):
+                self.add_uniqueness_rule(x, y)
+
+    def add_uniqueness_rule(self, x: int, y: int):
+        # elements = [
+        #     Element.WUMPUS,
+        #     Element.PIT,
+        #     Element.GOLD,
+        #     Element.POISONOUS_GAS,
+        #     Element.HEALING_POTION,
+        # ]
+        # for i in range(len(elements)):
+        #     for j in range(i + 1, len(elements)):
+        #         self.add_clause(
+        #             [-self.encode(elements[i], x, y), -self.encode(elements[j], x, y)]
+        #         )
+        pass
 
     def add_clause(self, rule: List[int]):
         self.facts.append(
@@ -46,6 +68,7 @@ class KnowledgeBase:
         return not is_satisfiable
 
     def update(self, percepts: List[Tuple[Percept, int, int]]):
+        print("===================== Knowledge Base Update =====================")
         # Process percepts and update knowledge base
         for percept, x, y in percepts:
             # Example: Adding the fact 'B(x, y)' if a breeze is perceived
@@ -69,12 +92,24 @@ class KnowledgeBase:
     @staticmethod
     def decode(encoded: int) -> Tuple[Enum, int, int]:
         # Decode a logical variable
+        isNegative = encoded < 0
+        if encoded < 0:
+            encoded = -encoded
         symbol = DECODE_MAPPING[encoded // 100]
         x = (encoded % 100) // 10
         y = encoded % 10
+        if isNegative:
+            return symbol, -x, -y
         return symbol, x, y
 
+    @staticmethod
+    def decode_rule(rule: List[int]) -> List[Tuple[Enum, int, int]]:
+        return [KnowledgeBase.decode(literal) for literal in rule]
+
     def infer_new_knowledge(self):
+        print(
+            "===================== KnowledgeBase: Inferring New Knowledge ====================="
+        )
         new_inferences = []
         grid_size = self.grid_size
 
@@ -104,7 +139,7 @@ class KnowledgeBase:
     def infer_from_percept(self, percept: Percept, x: int, y: int, grid_size: int):
         # Infer new knowledge based on the percept
         # Denote: Percept = P, Element = E
-        # Rule: P(x,y) <=> E(x+1,y) | E(x-1,y) | E(x,y+1) | E(x,y-1)
+        # Rule: P(x,y) => E(x+1,y) | E(x-1,y) | E(x,y+1) | E(x,y-1)
         # Convert to CNF:
         # (!P | E1 | E2 | E3 | E4) & (P | !E1) & (P | !E2) & (P | !E3) & (P | !E4)
 
@@ -127,31 +162,46 @@ class KnowledgeBase:
 
             # Add rule (!P | E1 | E2 | E3 | E4) to the knowledge base
             rule = [-percept_location_encoded] + possible_element_locations_encoded
-            print("+ Adding rule: ", rule)
+            print("+ Adding rule: ", self.decode_rule(rule))
             self.add_clause(rule)
 
-            # Add rules (P | !E1) & (P | !E2) & (P | !E3) & (P | !E4) to the knowledge base
-            for element_location_encoded in possible_element_locations_encoded:
-                rule = [percept_location_encoded, -element_location_encoded]
-                self.add_clause(rule)
-                if self.query(element_location_encoded):
-                    new_inferences.append([element_location_encoded])
-                    print("====> Inferred: ", element_location_encoded)
+            # # Add rules (P | !E1) & (P | !E2) & (P | !E3) & (P | !E4) to the knowledge base
+            # for element_location_encoded in possible_element_locations_encoded:
+            #     rule = [percept_location_encoded, -element_location_encoded]
+            #     self.add_clause(rule)
+            #     if self.query(element_location_encoded):
+            #         new_inferences.append([element_location_encoded])
+            #         print("====> Inferred: ", self.decode(element_location_encoded))
 
         return new_inferences
 
 
 def main():
-    knowledge_base = KnowledgeBase()
+    knowledge_base = KnowledgeBase(grid_size=3)
 
     # With 2x2 grid, if there is a breeze at (1, 0) and (0, 1), and (1, 1) is safe, then there is a pit at (0, 0)
-    knowledge_base.add_clause([knowledge_base.encode(Percept.BREEZE, 0, 1)])
-    knowledge_base.add_clause([knowledge_base.encode(Percept.BREEZE, 1, 0)])
-    knowledge_base.add_clause([-knowledge_base.encode(Element.PIT, 1, 1)])
-    knowledge_base.infer_new_knowledge()
+    # knowledge_base.add_clause([-knowledge_base.encode(Percept.BREEZE, 0, 1)])
+    # knowledge_base.add_clause([-knowledge_base.encode(Percept.BREEZE, 1, 0)])
+    # knowledge_base.add_clause([-knowledge_base.encode(Percept.BREEZE, 1, 2)])
+    # knowledge_base.add_clause([-knowledge_base.encode(Percept.BREEZE, 2, 1)])
+    # knowledge_base.add_clause([-knowledge_base.encode(Element.PIT, 0, 0)])
+    # knowledge_base.add_clause([-knowledge_base.encode(Element.PIT, 0, 2)])
+    # knowledge_base.add_clause([-knowledge_base.encode(Element.PIT, 2, 0)])
+    # knowledge_base.add_clause([-knowledge_base.encode(Element.PIT, 2, 2)])
+    # knowledge_base.add_clause([-knowledge_base.encode(Element.PIT, 1, 1)])
+    # knowledge_base.infer_new_knowledge()
+    print(knowledge_base.solver.get_model())
 
-    if knowledge_base.query(knowledge_base.encode(Element.PIT, 0, 0)):
-        print("Pit at (0, 0) is consistent with the knowledge base.")
+    # If there is a breeze at (0, 0) and there are no pit at (0, 1), then there is a pit at (1, 0)
+    knowledge_base.add_clause([knowledge_base.encode(Percept.BREEZE, 0, 0)])
+    knowledge_base.infer_new_knowledge()
+    knowledge_base.add_clause([-knowledge_base.encode(Element.PIT, 0, 1)])
+
+    if not knowledge_base.query(knowledge_base.encode(Element.PIT, 1, 0)):
+        print("There is no pit at (1, 0)")
+
+    if knowledge_base.query(knowledge_base.encode(Element.PIT, 1, 0)):
+        print("There is a pit at (1, 0)")
 
 
 if __name__ == "__main__":

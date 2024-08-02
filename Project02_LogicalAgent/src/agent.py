@@ -23,25 +23,67 @@ class Agent:
         self.current_direction = Direction.NORTH
         self.current_percepts: Set[Percept] = set()
         self.current_action: List[Tuple[Action, int, int]] = []
+        self.grabbed_gold: Set[Tuple[int, int]] = set()
+        self.grabbed_HP: Set[Tuple[int, int]] = set()
+        self.visited: Set[Tuple[int, int]] = set()
 
     # Main function to choose the next action
     def choose_action(
         self,
         percepts: List[Tuple[Percept, int, int]],
-        elements: List[Tuple[Element, int, int]],
+        elements: Tuple[Element, int, int],
     ) -> str:
         # Update the current percepts
+        self.visited.add(self.position)
         self.current_percepts.clear()
         for percept, x, y in percepts:
             self.current_percepts.add(percept)
-
-        # Use inference to decide the next action
-        self.knowledge_base.update(percepts)
+        print("============= Agent: Choose Action =================")
         # print("=============> Current percepts: ", self.current_percepts)
         print("=============> Current elements: ", elements)
-        for element, x, y in elements:
-            self.knowledge_base.add_clause([self.knowledge_base.encode(element, x, y)])
-        safe_moves = self.inference_engine.infer_safe_moves(self.position)
+        # Update the knowledge base with the new elements if elements is not None
+        if elements is not None:
+            self.knowledge_base.add_clause(
+                [self.knowledge_base.encode(elements[0], elements[1], elements[2])]
+            )
+            print("=============> Add ", elements[0], " at ", elements[1], elements[2])
+
+        # Infer that there is no element except the current element at the current position
+        for element in Element:
+            if element == Element.SAFE or element == Element.AGENT:
+                continue
+            encode_element = -self.knowledge_base.encode(
+                element, self.position[0], self.position[1]
+            )
+            if (
+                self.knowledge_base.query(encode_element) and element != elements[0]
+                if elements is not None
+                else True
+            ):
+                not_element_clause = [
+                    -self.knowledge_base.encode(
+                        element, self.position[0], self.position[1]
+                    )
+                ]
+                self.knowledge_base.add_clause(not_element_clause)
+                print("=============> Not ", element, " at ", self.position)
+        # Get percepts that not exists in percepts
+        for percept in Percept:
+            if percept not in self.current_percepts and percept != Percept.SCREAM:
+                print("=============> Add not ", percept, " at ", self.position)
+                self.knowledge_base.add_clause(
+                    [
+                        -self.knowledge_base.encode(
+                            percept, self.position[0], self.position[1]
+                        )
+                    ]
+                )
+        # Use inference to decide the next action
+        self.knowledge_base.update(percepts)
+        safe_moves = self.inference_engine.infer_safe_moves(
+            self.position, self.grabbed_gold, self.grabbed_HP, self.visited
+        )
+        print("=============================================================")
         return self.select_action(safe_moves)
 
     # Select an action based on the safe moves
@@ -49,11 +91,22 @@ class Agent:
         self, safe_moves: List[Tuple[int, int]]
     ) -> List[Tuple[Action, int, int]]:
         # Select an action from safe moves
+        print("============= Agent: Select Action =================")
         if not safe_moves:
             self.game_over = True
             return "end"
         else:
             next_position = safe_moves[0]
+            self.current_action = []
+            if (
+                next_position == self.position
+            ):  # It mean the current position contain gold or healing potion
+                self.current_action.append(
+                    (Action.GRAB, self.position[0], self.position[1])
+                )
+                print("=============> Current action: ", self.current_action)
+                print("=============================================================")
+                return self.current_action
             print("=============> Current position: ", self.position)
             print("=============> Current direction: ", self.current_direction)
             print("=============> Safe moves: ", safe_moves)
@@ -69,7 +122,7 @@ class Agent:
             # print("=============> Current position: ", self.position)
             # print("=============> Current direction: ", self.current_direction)
             # Reset the current action
-            self.current_action = []
+
             # Perform the turn left, turn right actions to align the direction
             self.current_action.extend(
                 [
@@ -78,12 +131,35 @@ class Agent:
                 ]
             )
             print("=============> Current action: ", self.current_action)
+            print("=============================================================")
             return self.current_action
 
     # Update the knowledge base with the new elements
-    def update_knowledge(self, new_elements: List[Tuple[Element, int, int]]):
-        for element, x, y in new_elements:
-            self.knowledge_base.add_clause([self.knowledge_base.encode(element, x, y)])
+    def update_knowledge(self, new_percept: Tuple[Percept, int, int]):
+        if new_percept is None:
+            return
+        # Update the knowledge base with the new percept (Percept.SCREAM)
+        percept, x, y = new_percept
+        if percept == Percept.SCREAM:
+            # If there is a scream, it means the Wumpus is killed with a shoot at current position and direction
+            # Get Wumpus position
+            if self.current_direction == Direction.NORTH:
+                wumpus_position = (x + 1, y)
+            elif self.current_direction == Direction.SOUTH:
+                wumpus_position = (x - 1, y)
+            elif self.current_direction == Direction.WEST:
+                wumpus_position = (x, y + 1)
+            elif self.current_direction == Direction.EAST:
+                wumpus_position = (x, y - 1)
+            # Remove the Wumpus from the knowledge base
+            not_wumpus_clause = [
+                -self.knowledge_base.encode(
+                    Element.WUMPUS, wumpus_position[0], wumpus_position[1]
+                )
+            ]
+            self.knowledge_base.add_clause(not_wumpus_clause)
+
+        self.knowledge_base.infer_new_knowledge()
 
     def log_action(self, action):
         # Log the action taken
@@ -131,21 +207,42 @@ class Agent:
         self.score -= 100
 
     def handle_grab(self, position: Tuple[int, int]):
-        is_healing_potion = self.inference_engine.infer_healing_potion(position)
+        is_healing_potion = (
+            self.inference_engine.infer_healing_potion(position)
+            and position not in self.grabbed_HP
+        )
         if is_healing_potion:
             self.health += 25
-        else:
-            self.score -= 10
+            # Remove the healing potion from the knowledge base
+            # not_hp_clause = [
+            #     -self.knowledge_base.encode(
+            #         Element.HEALING_POTION, position[0], position[1]
+            #     )
+            # ]
+            # self.knowledge_base.add_clause(not_hp_clause)
+            self.grabbed_HP.add(position)
 
-        is_gold = self.inference_engine.infer_gold(position)
+        self.score -= 10
+
+        is_gold = (
+            self.inference_engine.infer_gold(position)
+            and position not in self.grabbed_gold
+        )
         if is_gold:
             self.score += 5000
+            # not_gold_clause = [
+            #     -self.knowledge_base.encode(Element.GOLD, position[0], position[1])
+            # ]
+            # self.knowledge_base.add_clause(not_gold_clause)
+            self.grabbed_gold.add(position)
+        self.score -= 10
 
     def get_percept_string(self):
         percept_string = ""
         for percept in self.current_percepts:
             percept_string += f"{percept.name} "
-
+        if not percept_string:
+            percept_string = "None"
         return percept_string
 
     def get_action_string(self):

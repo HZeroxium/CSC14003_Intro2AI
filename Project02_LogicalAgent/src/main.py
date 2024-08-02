@@ -41,13 +41,14 @@ def draw_grid(env: Environment, agent: Agent, screen, font):
                 pygame.draw.rect(screen, (255, 0, 0), rect, 3)
 
 
-def draw_info_panel(agent, screen, font, env):
+def draw_info_panel(agent, screen, font, env, elements=None):
     score_text = f"Score: {agent.get_score()}"
     health_text = f"Health: {agent.health}"
     percept_text = f"Percepts: {agent.get_percept_string()}"
     action_text = f"Actions: {agent.get_action_string()}"
     agent_position = f"Agent Position: {agent.position}"
     agent_direction = f"Agent Direction: {agent.current_direction}"
+    elements = env.get_element(agent.position)
 
     score_surface = font.render(score_text, True, TEXT_COLOR)
     health_surface = font.render(health_text, True, TEXT_COLOR)
@@ -55,6 +56,7 @@ def draw_info_panel(agent, screen, font, env):
     action_surface = font.render(action_text, True, TEXT_COLOR)
     position_surface = font.render(agent_position, True, TEXT_COLOR)
     agent_direction_surface = font.render(agent_direction, True, TEXT_COLOR)
+    elements_surface = font.render(str(elements), True, TEXT_COLOR)
 
     screen.blit(score_surface, (10, env.size * CELL_SIZE + 10))
     screen.blit(health_surface, (10, env.size * CELL_SIZE + 40))
@@ -62,6 +64,7 @@ def draw_info_panel(agent, screen, font, env):
     screen.blit(action_surface, (10, env.size * CELL_SIZE + 100))
     screen.blit(position_surface, (10, env.size * CELL_SIZE + 130))
     screen.blit(agent_direction_surface, (10, env.size * CELL_SIZE + 160))
+    screen.blit(elements_surface, (10, env.size * CELL_SIZE + 190))
 
 
 # Function to draw a button on the screen
@@ -90,6 +93,10 @@ def main():
 
     running = True
     next_step = False
+
+    screen.fill(BACKGROUND_COLOR)
+    draw_grid(env, agent, screen, font)
+    draw_info_panel(agent, screen, font, env=env)
     next_step_button = draw_button(
         screen=screen,
         text="Next",
@@ -97,7 +104,12 @@ def main():
         pos=(SCREEN_WIDTH - BUTTON_WIDTH - 10, SCREEN_HEIGHT - INFO_PANEL_HEIGHT + 10),
     )
     pygame.display.update()
+    step = 0
     while running and not agent.is_game_over():
+        print("========================================")
+        print(f"Step: {step}")
+        print("========================================")
+        step += 1
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -111,10 +123,12 @@ def main():
                         next_step = True
 
         percepts = env.get_percept(agent.position)
-        elements = env.get_element(agent.position)
-        actions = agent.choose_action(percepts, elements)
-        new_elements = env.update(agent, actions)
-        agent.update_knowledge(new_elements)
+        element = env.get_element(agent.position)
+        actions = agent.choose_action(percepts, element)
+        new_percept = env.update(
+            agent, actions
+        )  # Update the environment based on the agent's actions
+        agent.update_knowledge(new_percept)  # For Wumpus killing
         next_step = False
 
         screen.fill(BACKGROUND_COLOR)
