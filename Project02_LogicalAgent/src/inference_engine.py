@@ -98,17 +98,15 @@ class InferenceEngine:
 
     def infer_not_elements(self, position: Tuple[int, int], existing_element: Element):
         x, y = position
-        if existing_element is None:
-            existing_element = Element.AGENT
         for element in Element:
-            if element == Element.AGENT or element == Element.SAFE:
+            if element == Element.SAFE:
                 continue
             if element != existing_element:
                 self.kb.add_clause([-self.kb.encode(element, x, y)])
                 print(f"=============> Not {element} at {position}")
 
     def add_element(self, position: Tuple[int, int], element: Element):
-        if element is not None:
+        if element is not Element.AGENT:
             x, y = position
             self.kb.add_clause([self.kb.encode(element, x, y)])
             print(f"=============> Add {element} at {position}")
