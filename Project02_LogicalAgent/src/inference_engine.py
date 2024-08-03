@@ -55,6 +55,7 @@ class InferenceEngine:
         # Return the best move
         return [move for move, _ in evaluated_moves]
 
+    # Check if a cell is safe
     def is_safe(self, x: int, y: int) -> bool:
         is_pit = self.kb.query(self.kb.encode(Element.PIT, x, y))
         is_wumpus = self.kb.query(self.kb.encode(Element.WUMPUS, x, y))
@@ -62,6 +63,7 @@ class InferenceEngine:
             print(f"Cell ({x}, {y}) is not safe")
         return not is_pit and not is_wumpus
 
+    # Evaluate the heuristic value of a given cell
     def evaluate_heuristic(self, x: int, y: int) -> int:
         """Evaluate the heuristic value of a given cell (x, y)."""
         total_value = 0
@@ -75,13 +77,41 @@ class InferenceEngine:
 
         return total_value
 
+    # Infer the presence of a healing potion at a given position
     def infer_healing_potion(self, position: Tuple[int, int]) -> bool:
         x, y = position
         return self.kb.query(self.kb.encode(Element.HEALING_POTION, x, y))
 
+    # Infer the presence of gold at a given position
     def infer_gold(self, position: Tuple[int, int]) -> bool:
         x, y = position
         return self.kb.query(self.kb.encode(Element.GOLD, x, y))
+
+    def infer_not_percepts(
+        self, position: Tuple[int, int], existing_percepts: Set[Percept]
+    ):
+        x, y = position
+        for percept in Percept:
+            if percept not in existing_percepts:
+                self.kb.add_clause([-self.kb.encode(percept, x, y)])
+                print(f"=============> Not {percept} at {position}")
+
+    def infer_not_elements(self, position: Tuple[int, int], existing_element: Element):
+        x, y = position
+        if existing_element is None:
+            existing_element = Element.AGENT
+        for element in Element:
+            if element == Element.AGENT or element == Element.SAFE:
+                continue
+            if element != existing_element:
+                self.kb.add_clause([-self.kb.encode(element, x, y)])
+                print(f"=============> Not {element} at {position}")
+
+    def add_element(self, position: Tuple[int, int], element: Element):
+        if element is not None:
+            x, y = position
+            self.kb.add_clause([self.kb.encode(element, x, y)])
+            print(f"=============> Add {element} at {position}")
 
 
 # Helper function to get adjacent cells
