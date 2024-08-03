@@ -23,7 +23,7 @@ class Direction(Enum):
 class Percept(Enum):
     BREEZE = "B"
     STENCH = "S"
-    SCREAM = "SC"
+    # SCREAM = "SC"
     WHIFF = "WF"
     GLOW = "GL"
 
@@ -124,13 +124,13 @@ class ActionHandler:
     ) -> Tuple[int, int]:
         x, y = position
         if direction == Direction.NORTH:
-            return x - 1, y
+            return (x - 1, y)
         elif direction == Direction.SOUTH:
-            return x + 1, y
+            return (x + 1, y)
         elif direction == Direction.WEST:
-            return x, y - 1
+            return (x, y - 1)
         elif direction == Direction.EAST:
-            return x, y + 1
+            return (x, y + 1)
 
     @staticmethod
     def turn_left(direction: Direction) -> Direction:
