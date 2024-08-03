@@ -9,6 +9,7 @@ from utilities import (
     Element,
     Percept,
     ELEMENT_TO_PERCEPT,
+    ActionHandler,
 )
 
 # **Input**: the given map is represented by matrix, which is stored in the input file, for example, map1.txt. The input file format is described as follows:
@@ -68,7 +69,6 @@ class Environment:
             # Read raw data from the file
             n = int(file.readline().strip())
             map_data = [line.strip().split(".") for line in file]
-            # print(map_data)
 
             # Initialize the map
             self.map = [[set() for _ in range(n)] for _ in range(n)]
@@ -90,40 +90,42 @@ class Environment:
 
         return percepts
 
+    # Return the element at the given position
     def get_element(self, position: Tuple[int, int]) -> Tuple[Element, int, int]:
-        element: Element = None
+        element: Element = Element.AGENT
+        if position is None:
+            print("Error: Agent position is None")
+            return element, -1, -1
         x, y = position
         for element_ in Element:
-            if (
-                element_ in self.map[x][y]
-                and element_ != Element.AGENT
-                and element_ != Element.SAFE
-            ):
+            if element_ in self.map[x][y] and element_ != Element.SAFE:
                 element = element_
-        if element is None:
-            return None
         return element, x, y
 
+    # Return the size of the map
     def get_map_size(self):
         return self.size
 
+    # Return the agent's position
     def get_agent_position(self):
         for i in range(self.size):
             for j in range(self.size):
                 if Element.AGENT in self.map[i][j]:
                     return (i, j)
 
+    # Update the environment based on the agent's actions
     def update(
         self, agent, actions: List[Tuple[Action, int, int]]
     ) -> Tuple[Percept, int, int]:
         new_percept: Percept = None
         for action, x, y in actions:
             if action == Action.TURN_LEFT:
-                agent.current_direction = agent.turn_left(agent.current_direction)
+                print("Turning left...")
+                agent.turn_left()
             elif action == Action.TURN_RIGHT:
-                agent.current_direction = agent.turn_right(agent.current_direction)
+                agent.turn_right()
             if action == Action.FORWARD:
-                agent.handle_forward((x, y))
+                agent.handle_forward()
                 self.visited[x][y] = True
                 if Element.PIT in self.map[x][y]:
                     agent.game_over = True
@@ -136,33 +138,26 @@ class Environment:
                     return
 
             elif action == Action.SHOOT:
-                agent.handle_shoot((x, y))
-                # Check if there is a Wumpus in the (x, y) position
-                if self.handle_shoot((x, y), agent.current_direction):
-                    new_percept = Percept.SCREAM
+                # Shoot the arrow from the agent's position to the given direction
+                is_killed = self.handle_shoot((x, y), agent.current_direction)
+                agent.handle_shoot(is_killed)
             elif action == Action.GRAB:
                 print("Grabbing...")
                 agent.handle_grab((x, y))
                 self.handle_grab((x, y))
         return new_percept
 
-    def handle_shoot(self, position, direction: Direction) -> bool:
-        x, y = position  # Position to shoot (Agent thinks there is a Wumpus)
+    # Handle agent's shooting action
+    def handle_shoot(self, position: Tuple[int, int], direction: Direction) -> bool:
         # Handle the consequences of shooting (e.g., killing Wumpus)
-        if "W" in self.map[x][y]:
-            self.map[x][y] = self.map[x][y].replace("W", "")
-            # Add a SCREAM percept at agent's position to indicate the Wumpus is killed
-            if direction == Direction.UP:
-                self.map[x][y - 1].add(Percept.SCREAM)
-            elif direction == Direction.DOWN:
-                self.map[x][y + 1].add(Percept.SCREAM)
-            elif direction == Direction.LEFT:
-                self.map[x - 1][y].add(Percept.SCREAM)
-            elif direction == Direction.RIGHT:
-                self.map[x + 1][y].add(Percept.SCREAM)
+        wumpus_position = ActionHandler.handle_forward(position, direction)
+        x, y = wumpus_position
+        if Element.WUMPUS in self.map[x][y]:
+            self.map[x][y] = self.map[x][y].remove(Element.WUMPUS)
             return True
         return False
 
+    # Handle agent's grabbing action
     def handle_grab(self, position: Tuple[int, int]) -> Element:
         x, y = position
         # Handle the consequences of grabbing (e.g., picking up gold)
@@ -176,6 +171,7 @@ class Environment:
             return Element.HEALING_POTION
         return None
 
+    # Draw the grid on the screen
     def draw_grid(self, screen):
         n = self.size
         font = pygame.font.SysFont(None, 54)
@@ -193,20 +189,20 @@ class Environment:
                 screen.blit(text_surface, text_rect)
 
 
-def main():
-    env = Environment("../data/input/map1.txt")
-    pygame.init()
-    screen = pygame.display.set_mode((env.size * CELL_SIZE, env.size * CELL_SIZE))
-    pygame.display.set_caption("Wumpus World")
-    env.draw_grid(screen)
-    pygame.display.flip()
+# def main():
+#     env = Environment("../data/input/map1.txt")
+#     pygame.init()
+#     screen = pygame.display.set_mode((env.size * CELL_SIZE, env.size * CELL_SIZE))
+#     pygame.display.set_caption("Wumpus World")
+#     env.draw_grid(screen)
+#     pygame.display.flip()
 
-    running = True
-    while running:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
+#     running = True
+#     while running:
+#         for event in pygame.event.get():
+#             if event.type == pygame.QUIT:
+#                 running = False
 
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()
