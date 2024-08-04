@@ -14,6 +14,7 @@ from utilities import (
 )
 
 actionHandler = ActionHandler()
+INITIAL_POSITION = (0, 0)
 
 
 class Agent:
@@ -30,6 +31,7 @@ class Agent:
         self.grid_size = grid_size
         self.score = 0
         self.game_over = False
+        self.game_won = False
         self.current_direction = Direction.NORTH
         self.current_percepts: Set[Percept] = set()
         self.current_action: List[Tuple[Action, int, int]] = []
@@ -47,12 +49,15 @@ class Agent:
     ) -> str:
         # Update the current percepts
         self.visited.add(self.position)
+        print("Visited: ", self.visited)
         self.current_percepts.clear()
         for percept, x, y in percepts:
             self.current_percepts.add(percept)
         print("============= Agent: Choose Action =================")
         # print("=============> Current percepts: ", self.current_percepts)
         print("=============> Current elements: ", element)
+        # if element[0] == Element.GOLD or element[0] == Element.HEALING_POTION:
+        #     return self.select_action([(element[1], element[2])])
         # Update the knowledge base with the new elements if elements is not None
         self.inference_engine.add_element(self.position, element[0])
 
@@ -72,44 +77,54 @@ class Agent:
     def select_action(
         self, safe_moves: List[Tuple[int, int]]
     ) -> List[Tuple[Action, int, int]]:
+        self.current_action = []
         # Select an action from safe moves
         print("============= Agent: Select Action =================")
+        next_position = None
         if not safe_moves:
-            self.game_over = True
-            return "end"
+            # Check if all map is visited
+            if len(self.visited) == self.grid_size * self.grid_size:
+                self.game_over = True
+                return "end"
+            # If there is no safe move, then go back to the parent node and explore other paths
+            next_position = self.parent[self.position]
+            # self.game_over = True
+            # return "end"
         else:
             next_position = safe_moves[0]
-            self.current_action = []
             if (
                 next_position == self.position
             ):  # It mean the current position contain gold or healing potion
+                next_position = safe_moves[1]
                 self.current_action.append(
                     (Action.GRAB, self.position[0], self.position[1])
                 )
                 print("=============> Current action: ", self.current_action)
                 print("=============================================================")
-                return self.current_action
-            print("=============> Current position: ", self.position)
-            print("=============> Current direction: ", self.current_direction)
-            print("=============> Safe moves: ", safe_moves)
-            print("=============> Next position: ", next_position)
-            target_direction: Direction = get_target_direction(
-                self.position, next_position
+                # return self.current_action
+        self.parent[next_position] = self.position
+        print("=====> Parent of ", next_position, " is ", self.position)
+        print("=============> Current position: ", self.position)
+        print("=============> Current direction: ", self.current_direction)
+        # print("=============> Safe moves: ", safe_moves)
+        print("=============> Next position: ", next_position)
+        target_direction: Direction = get_target_direction(self.position, next_position)
+        print("=============> Target direction: ", target_direction)
+        print("=============> Current action: ", self.current_action)
+        turn_actions: List[Action] = get_actions(
+            self.current_direction, target_direction
+        )
+        # Perform the turn left, turn right actions to align the direction
+        self.current_action.extend(
+            [(action, self.position[0], self.position[1]) for action in turn_actions]
+        )
+        if next_position == INITIAL_POSITION:
+            self.current_action.append(
+                (Action.CLIMB, self.position[0], self.position[1])
             )
-            print("=============> Target direction: ", target_direction)
-            turn_actions: List[Action] = get_actions(
-                self.current_direction, target_direction
-            )
-            # Perform the turn left, turn right actions to align the direction
-            self.current_action.extend(
-                [
-                    (action, self.position[0], self.position[1])
-                    for action in turn_actions
-                ]
-            )
-            print("=============> Current action: ", self.current_action)
-            print("=============================================================")
-            return self.current_action
+        print("=============> Current action: ", self.current_action)
+        print("=============================================================")
+        return self.current_action
 
     # Update the knowledge base with the new elements
     def update_knowledge(self, new_percept: Tuple[Percept, int, int]):
@@ -117,6 +132,9 @@ class Agent:
 
     def is_game_over(self):
         return self.game_over
+
+    def is_game_won(self):
+        return self.game_won
 
     def get_score(self):
         return self.score
@@ -173,6 +191,10 @@ class Agent:
         if self.healing_potions > 0:
             self.health = 100 if self.health + 25 > 100 else self.health + 25
             self.healing_potions -= 1
+
+    def handle_climb(self):
+        if self.position == INITIAL_POSITION:
+            self.game_won = True
 
     def get_percept_string(self):
         percept_string = ""

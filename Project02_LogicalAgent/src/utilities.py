@@ -11,6 +11,7 @@ class Action(Enum):
     SHOOT = "shoot"
     GRAB = "grab"
     HEAL = "heal"
+    CLIMB = "climb"
 
 
 class Direction(Enum):

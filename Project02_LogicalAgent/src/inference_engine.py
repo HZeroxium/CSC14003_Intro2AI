@@ -53,14 +53,25 @@ class InferenceEngine:
         evaluated_moves.sort(key=lambda x: x[1], reverse=True)
         print("=================================================================")
         # Return the best move
+        print("Safe moves: ", [move for move, _ in evaluated_moves])
+
+        # Check if the agent visited all cells and there is no safe move, so the agent should go back to the initial position
+        if not evaluated_moves:
+            not_visited_cells = self.get_not_visited_cells(visited)
+            not_safe_cells = self.get_not_safe_cells(visited)
+            if not_visited_cells == not_safe_cells:
+                if (0, 0) in get_adjacent_cells(x, y, self.kb.grid_size):
+                    return [(0, 0)]
         return [move for move, _ in evaluated_moves]
 
     # Check if a cell is safe
     def is_safe(self, x: int, y: int) -> bool:
         is_pit = self.kb.query(self.kb.encode(Element.PIT, x, y))
         is_wumpus = self.kb.query(self.kb.encode(Element.WUMPUS, x, y))
-        if is_pit or is_wumpus:
-            print(f"Cell ({x}, {y}) is not safe")
+        if is_pit:
+            print(f"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Pit at {x, y}")
+        if is_wumpus:
+            print(f"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Wumpus at {x, y}")
         return not is_pit and not is_wumpus
 
     # Evaluate the heuristic value of a given cell
@@ -87,6 +98,7 @@ class InferenceEngine:
         x, y = position
         return self.kb.query(self.kb.encode(Element.GOLD, x, y))
 
+    # Infer the existence of percepts that are not present at a given position
     def infer_not_percepts(
         self, position: Tuple[int, int], existing_percepts: Set[Percept]
     ):
@@ -96,6 +108,7 @@ class InferenceEngine:
                 self.kb.add_clause([-self.kb.encode(percept, x, y)])
                 print(f"=============> Not {percept} at {position}")
 
+    # Infer the absence of elements that are not present at a given position
     def infer_not_elements(self, position: Tuple[int, int], existing_element: Element):
         x, y = position
         for element in Element:
@@ -105,11 +118,32 @@ class InferenceEngine:
                 self.kb.add_clause([-self.kb.encode(element, x, y)])
                 print(f"=============> Not {element} at {position}")
 
+    # Add an element to the knowledge base
     def add_element(self, position: Tuple[int, int], element: Element):
         if element is not Element.AGENT:
             x, y = position
             self.kb.add_clause([self.kb.encode(element, x, y)])
             print(f"=============> Add {element} at {position}")
+
+    def get_not_visited_cells(
+        self, visited: Set[Tuple[int, int]]
+    ) -> List[Tuple[int, int]]:
+        not_visited_cells = []
+        for i in range(self.kb.grid_size):
+            for j in range(self.kb.grid_size):
+                if (i, j) not in visited:
+                    not_visited_cells.append((i, j))
+        return not_visited_cells
+
+    def get_not_safe_cells(
+        self, visited: Set[Tuple[int, int]]
+    ) -> List[Tuple[int, int]]:
+        not_safe_cells = []
+        for i in range(self.kb.grid_size):
+            for j in range(self.kb.grid_size):
+                if not self.is_safe(i, j) and (i, j) not in visited:
+                    not_safe_cells.append((i, j))
+        return not_safe_cells
 
 
 # Helper function to get adjacent cells

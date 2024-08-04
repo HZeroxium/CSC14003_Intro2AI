@@ -145,6 +145,10 @@ class Environment:
                 print("Grabbing...")
                 agent.handle_grab((x, y))
                 self.handle_grab((x, y))
+            elif action == Action.CLIMB:
+                print("Climbing...")
+                agent.handle_climb()
+                return
         return new_percept
 
     # Handle agent's shooting action
@@ -164,6 +168,10 @@ class Environment:
         if Element.GOLD in self.map[x][y]:
             self.map[x][y].remove(Element.GOLD)
             print("Current cell: ", self.map[x][y])
+            # Remove Percept.GLOW in adjacent cells
+            for i, j in [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)]:
+                if 0 <= i < len(self.map) and 0 <= j < len(self.map):
+                    self.map[i][j].remove(Percept.GLOW)
             return Element.GOLD
         # Pick up the healing potion
         if Element.HEALING_POTION in self.map[x][y]:

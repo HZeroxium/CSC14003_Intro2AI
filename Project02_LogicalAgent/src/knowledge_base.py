@@ -37,18 +37,18 @@ class KnowledgeBase:
                 self.add_uniqueness_rule(x, y)
 
     def add_uniqueness_rule(self, x: int, y: int):
-        # elements = [
-        #     Element.WUMPUS,
-        #     Element.PIT,
-        #     Element.GOLD,
-        #     Element.POISONOUS_GAS,
-        #     Element.HEALING_POTION,
-        # ]
-        # for i in range(len(elements)):
-        #     for j in range(i + 1, len(elements)):
-        #         self.add_clause(
-        #             [-self.encode(elements[i], x, y), -self.encode(elements[j], x, y)]
-        #         )
+        elements = [
+            Element.WUMPUS,
+            Element.PIT,
+            Element.GOLD,
+            Element.POISONOUS_GAS,
+            Element.HEALING_POTION,
+        ]
+        for i in range(len(elements)):
+            for j in range(i + 1, len(elements)):
+                self.add_clause(
+                    [-self.encode(elements[i], x, y), -self.encode(elements[j], x, y)]
+                )
         pass
 
     def add_clause(self, rule: List[int]):
