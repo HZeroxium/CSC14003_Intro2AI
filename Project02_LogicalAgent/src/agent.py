@@ -149,10 +149,12 @@ class Agent:
             self.game_won = True
 
     def get_percept_string(self) -> str:
-        return " ".join(percept.name for percept in self.current_percepts) or "None"
+        # Format: (Percept1, Percept2, ...)
+        return ", ".join(percept.name for percept in self.current_percepts) or "None"
 
     def get_action_string(self) -> str:
-        return " ".join(action[0].name for action in self.current_action)
+        # Format: [Action1, Action2, ...]. Example: [TURN_LEFT, FORWARD, GRAB]
+        return ", ".join(action.name for action, _, _ in self.current_action) or "None"
 
     def get_dangerous_cells_str(self) -> str:
         return ", ".join(
