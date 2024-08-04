@@ -1,7 +1,5 @@
-# utilities.py
-
 from enum import Enum
-from typing import List, Tuple, Set, Dict
+from typing import List, Tuple, Dict
 
 
 class Action(Enum):
@@ -24,7 +22,6 @@ class Direction(Enum):
 class Percept(Enum):
     BREEZE = "B"
     STENCH = "S"
-    # SCREAM = "SC"
     WHIFF = "WF"
     GLOW = "GL"
 
@@ -56,25 +53,17 @@ PERCEPT_TO_ELEMENT: Dict[Percept, Element] = {
 }
 
 
-# Helper function to get target direction based on current position and target position
 def get_target_direction(
     current_position: Tuple[int, int], target_position: Tuple[int, int]
 ) -> Direction:
     x1, y1 = current_position
     x2, y2 = target_position
     if x1 == x2:
-        if y2 > y1:
-            return Direction.EAST
-        else:
-            return Direction.WEST
-    elif y1 == y2:
-        if x2 > x1:
-            return Direction.SOUTH
-        else:
-            return Direction.NORTH
+        return Direction.EAST if y2 > y1 else Direction.WEST
+    if y1 == y2:
+        return Direction.SOUTH if x2 > x1 else Direction.NORTH
 
 
-# Helper function to get list of actions based on the current direction and the target direction
 def get_actions(
     current_direction: Direction, target_direction: Direction
 ) -> List[Action]:
@@ -82,40 +71,43 @@ def get_actions(
     if current_direction == target_direction:
         actions.append(Action.FORWARD)
     else:
-        if current_direction == Direction.NORTH:
-            if target_direction == Direction.WEST:
-                actions.append(Action.TURN_LEFT)
-            elif target_direction == Direction.EAST:
-                actions.append(Action.TURN_RIGHT)
-            elif target_direction == Direction.SOUTH:
-                actions.append(Action.TURN_LEFT)
-                actions.append(Action.TURN_LEFT)
-        elif current_direction == Direction.SOUTH:
-            if target_direction == Direction.WEST:
-                actions.append(Action.TURN_RIGHT)
-            elif target_direction == Direction.EAST:
-                actions.append(Action.TURN_LEFT)
-            elif target_direction == Direction.NORTH:
-                actions.append(Action.TURN_LEFT)
-                actions.append(Action.TURN_LEFT)
-        elif current_direction == Direction.WEST:
-            if target_direction == Direction.NORTH:
-                actions.append(Action.TURN_RIGHT)
-            elif target_direction == Direction.SOUTH:
-                actions.append(Action.TURN_LEFT)
-            elif target_direction == Direction.EAST:
-                actions.append(Action.TURN_LEFT)
-                actions.append(Action.TURN_LEFT)
-        elif current_direction == Direction.EAST:
-            if target_direction == Direction.NORTH:
-                actions.append(Action.TURN_LEFT)
-            elif target_direction == Direction.SOUTH:
-                actions.append(Action.TURN_RIGHT)
-            elif target_direction == Direction.WEST:
-                actions.append(Action.TURN_LEFT)
-                actions.append(Action.TURN_LEFT)
+        actions.extend(determine_turn_actions(current_direction, target_direction))
         actions.append(Action.FORWARD)
     return actions
+
+
+def determine_turn_actions(
+    current_direction: Direction, target_direction: Direction
+) -> List[Action]:
+    if current_direction == Direction.NORTH:
+        if target_direction == Direction.WEST:
+            return [Action.TURN_LEFT]
+        if target_direction == Direction.EAST:
+            return [Action.TURN_RIGHT]
+        if target_direction == Direction.SOUTH:
+            return [Action.TURN_LEFT, Action.TURN_LEFT]
+    if current_direction == Direction.SOUTH:
+        if target_direction == Direction.WEST:
+            return [Action.TURN_RIGHT]
+        if target_direction == Direction.EAST:
+            return [Action.TURN_LEFT]
+        if target_direction == Direction.NORTH:
+            return [Action.TURN_LEFT, Action.TURN_LEFT]
+    if current_direction == Direction.WEST:
+        if target_direction == Direction.NORTH:
+            return [Action.TURN_RIGHT]
+        if target_direction == Direction.SOUTH:
+            return [Action.TURN_LEFT]
+        if target_direction == Direction.EAST:
+            return [Action.TURN_LEFT, Action.TURN_LEFT]
+    if current_direction == Direction.EAST:
+        if target_direction == Direction.NORTH:
+            return [Action.TURN_LEFT]
+        if target_direction == Direction.SOUTH:
+            return [Action.TURN_RIGHT]
+        if target_direction == Direction.WEST:
+            return [Action.TURN_LEFT, Action.TURN_LEFT]
+    return []
 
 
 class ActionHandler:
@@ -126,34 +118,30 @@ class ActionHandler:
         x, y = position
         if direction == Direction.NORTH:
             return (x - 1, y)
-        elif direction == Direction.SOUTH:
+        if direction == Direction.SOUTH:
             return (x + 1, y)
-        elif direction == Direction.WEST:
+        if direction == Direction.WEST:
             return (x, y - 1)
-        elif direction == Direction.EAST:
+        if direction == Direction.EAST:
             return (x, y + 1)
 
     @staticmethod
     def turn_left(direction: Direction) -> Direction:
-        if direction == Direction.NORTH:
-            return Direction.WEST
-        elif direction == Direction.SOUTH:
-            return Direction.EAST
-        elif direction == Direction.WEST:
-            return Direction.SOUTH
-        elif direction == Direction.EAST:
-            return Direction.NORTH
+        return {
+            Direction.NORTH: Direction.WEST,
+            Direction.SOUTH: Direction.EAST,
+            Direction.WEST: Direction.SOUTH,
+            Direction.EAST: Direction.NORTH,
+        }[direction]
 
     @staticmethod
     def turn_right(direction: Direction) -> Direction:
-        if direction == Direction.NORTH:
-            return Direction.EAST
-        elif direction == Direction.SOUTH:
-            return Direction.WEST
-        elif direction == Direction.WEST:
-            return Direction.NORTH
-        elif direction == Direction.EAST:
-            return Direction.SOUTH
+        return {
+            Direction.NORTH: Direction.EAST,
+            Direction.SOUTH: Direction.WEST,
+            Direction.WEST: Direction.NORTH,
+            Direction.EAST: Direction.SOUTH,
+        }[direction]
 
     @staticmethod
     def handle_shoot(
