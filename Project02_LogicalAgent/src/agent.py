@@ -48,6 +48,9 @@ class Agent:
             {}
         )  # Parent dictionary to store the parent of each cell
         self.healing_potions: int = 0  # Number of healing potions grabbed
+        self.dangerous_cells: Set[Tuple[Element, int, int]] = (
+            set()
+        )  # Set of dangerous cells
 
     # Main function to choose the next action
     def choose_action(
@@ -78,7 +81,11 @@ class Agent:
             self.knowledge_base.update(percepts)
             print("=============================================================")
         safe_moves = self.inference_engine.infer_safe_moves(
-            self.position, self.grabbed_gold, self.grabbed_HP, self.visited
+            self.position,
+            self.grabbed_gold,
+            self.grabbed_HP,
+            self.visited,
+            self.dangerous_cells,
         )
         return self.select_action(safe_moves)
 
@@ -225,3 +232,10 @@ class Agent:
             action_string += f"{action[0].name} "
 
         return action_string
+
+    def get_dangerous_cells_str(self):
+        # Get the string representation of dangerous cells
+        dangerous_cells_str = ""
+        for element, x, y in self.dangerous_cells:
+            dangerous_cells_str += f"({element.value}, {x}, {y}),"
+        return dangerous_cells_str

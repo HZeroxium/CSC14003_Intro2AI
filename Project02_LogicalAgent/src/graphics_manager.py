@@ -1,4 +1,5 @@
 import pygame  # type: ignore
+from utilities import Element
 
 
 class GraphicsManager:
@@ -17,6 +18,7 @@ class GraphicsManager:
     BUTTON_HEIGHT = 50
     BLACK = (0, 0, 0)
     GRAY = (192, 192, 192)
+    GREEN = (0, 255, 0)
 
     @staticmethod
     def draw_grid(env, agent, screen, font):
@@ -27,16 +29,35 @@ class GraphicsManager:
                 rect = pygame.Rect(
                     x, y, GraphicsManager.CELL_SIZE, GraphicsManager.CELL_SIZE
                 )
+
+                # Draw the cell in gray if not visited, else in white
+                if (row, col) in agent.visited:
+                    cell_color = GraphicsManager.BACKGROUND_COLOR
+                else:
+                    cell_color = GraphicsManager.GRAY
+
+                pygame.draw.rect(screen, cell_color, rect)
+
+                # Highlight dangerous cells
+                if any(
+                    (elem, row, col) in agent.dangerous_cells
+                    for elem in [Element.PIT, Element.WUMPUS, Element.POISONOUS_GAS]
+                ):
+                    pygame.draw.rect(screen, GraphicsManager.GREEN, rect)
+
                 pygame.draw.rect(screen, GraphicsManager.GRID_COLOR, rect, 1)
 
-                elements = env.get_element((row, col))
-                text_surface = font.render(
-                    env.cell_to_string(env.map[row][col]),
-                    True,
-                    GraphicsManager.TEXT_COLOR,
-                )
-                screen.blit(text_surface, (x + 5, y + 5))
+                # Draw elements in the cell only if visited
+                if (row, col) in agent.visited:
+                    elements = env.get_element((row, col))
+                    text_surface = font.render(
+                        env.cell_to_string(env.map[row][col]),
+                        True,
+                        GraphicsManager.TEXT_COLOR,
+                    )
+                    screen.blit(text_surface, (x + 5, y + 5))
 
+                # Highlight the agent's current position
                 if (row, col) == agent.position:
                     pygame.draw.rect(screen, (255, 0, 0), rect, 3)
 
@@ -48,7 +69,8 @@ class GraphicsManager:
         action_text = f"Actions: {agent.get_action_string()}"
         agent_position = f"Agent Position: {agent.position}"
         agent_direction = f"Agent Direction: {agent.current_direction}"
-        elements = env.get_element(agent.position)
+        elements = f"Elements: {env.get_element(agent.position)}"
+        dangerous_cells = f"Dangerous Cells: {agent.get_dangerous_cells_str()}"
 
         score_surface = font.render(score_text, True, GraphicsManager.TEXT_COLOR)
         health_surface = font.render(health_text, True, GraphicsManager.TEXT_COLOR)
@@ -59,6 +81,9 @@ class GraphicsManager:
             agent_direction, True, GraphicsManager.TEXT_COLOR
         )
         elements_surface = font.render(str(elements), True, GraphicsManager.TEXT_COLOR)
+        dangerous_cells_surface = font.render(
+            str(dangerous_cells), True, GraphicsManager.TEXT_COLOR
+        )
 
         screen.blit(score_surface, (10, env.size * GraphicsManager.CELL_SIZE + 10))
         screen.blit(health_surface, (10, env.size * GraphicsManager.CELL_SIZE + 40))
@@ -69,6 +94,9 @@ class GraphicsManager:
             agent_direction_surface, (10, env.size * GraphicsManager.CELL_SIZE + 160)
         )
         screen.blit(elements_surface, (10, env.size * GraphicsManager.CELL_SIZE + 190))
+        screen.blit(
+            dangerous_cells_surface, (10, env.size * GraphicsManager.CELL_SIZE + 220)
+        )
 
     @staticmethod
     def draw_button(screen, text, pos, size, color=GRAY):

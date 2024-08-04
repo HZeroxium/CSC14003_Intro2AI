@@ -30,6 +30,7 @@ class InferenceEngine:
         grabbed_gold: Set[Tuple[int, int]],
         grabbed_HP: Set[Tuple[int, int]],
         visited: Set[Tuple[int, int]],
+        dangerous_cells: Set[Tuple[Element, int, int]],
     ) -> List[Tuple[int, int]]:
         print("======== InferenceEngine: Infer Safe Moves =================")
         x, y = position
@@ -50,6 +51,13 @@ class InferenceEngine:
             if self.is_safe(i, j) and (i, j) not in visited:
                 heuristic_value = self.evaluate_heuristic(i, j)
                 evaluated_moves.append(((i, j), heuristic_value))
+            if not self.is_safe(i, j):
+                if self.kb.query(self.kb.encode(Element.WUMPUS, i, j)):
+                    dangerous_cells.add((Element.WUMPUS, i, j))
+                if self.kb.query(self.kb.encode(Element.PIT, i, j)):
+                    dangerous_cells.add((Element.PIT, i, j))
+                if self.kb.query(self.kb.encode(Element.POISONOUS_GAS, i, j)):
+                    dangerous_cells.add((Element.POISONOUS_GAS, i, j))
 
         # Sort moves by their heuristic value (descending)
         evaluated_moves.sort(key=lambda x: x[1], reverse=True)

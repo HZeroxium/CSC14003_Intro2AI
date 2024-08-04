@@ -142,11 +142,9 @@ class Environment:
                 is_killed = self.handle_shoot((x, y), agent.current_direction)
                 agent.handle_shoot(is_killed)
             elif action == Action.GRAB:
-                print("Grabbing...")
                 agent.handle_grab((x, y))
                 self.handle_grab((x, y))
             elif action == Action.CLIMB:
-                print("Climbing...")
                 agent.handle_climb()
                 return
         return new_percept
