@@ -194,7 +194,7 @@ class Agent:
         self._move_to_position(next_position)
         if next_position == INITIAL_POSITION:
             self.current_action.append(
-                (Action.CLIMB, self.position[0], self.position[1])
+                (Action.CLIMB, INITIAL_POSITION[0], INITIAL_POSITION[1])
             )
         return self.current_action
 
@@ -206,3 +206,13 @@ class Agent:
         self.current_action.extend(
             [(action, self.position[0], self.position[1]) for action in turn_actions]
         )
+
+    # Write action to log file with format
+    # (1, 1): move forward
+    # (1, 2): turn right
+    # (1, 2): shoot
+    # ...
+    def log_actions(self):
+        with open("actions.log", "a") as f:
+            for action, x, y in self.current_action:
+                f.write(f"({x}, {y}): {action.name}\n")
