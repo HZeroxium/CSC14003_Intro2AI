@@ -3,9 +3,9 @@ import pygame  # type: ignore
 
 class GraphicsManager:
     CELL_SIZE = 100
-    INFO_PANEL_HEIGHT = 200
-    SCREEN_WIDTH = 800
-    SCREEN_HEIGHT = 800 + INFO_PANEL_HEIGHT
+    INFO_PANEL_HEIGHT = 300
+    SCREEN_WIDTH = 1000
+    SCREEN_HEIGHT = 1000 + INFO_PANEL_HEIGHT
     FONT_SIZE = 24
     BACKGROUND_COLOR = (255, 255, 255)
     GRID_COLOR = (0, 0, 0)

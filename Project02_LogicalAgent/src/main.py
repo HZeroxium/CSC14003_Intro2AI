@@ -5,7 +5,7 @@ from graphics_manager import GraphicsManager
 
 
 def main():
-    env = Environment("../data/input/map1.txt")
+    env = Environment("../data/input/map5.txt")
     agent = Agent(
         initial_position=env.get_agent_position(), grid_size=env.get_map_size()
     )

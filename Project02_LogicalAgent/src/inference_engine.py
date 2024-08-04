@@ -1,3 +1,5 @@
+# inference_engine.py
+
 from environment import Percept, Element
 from knowledge_base import KnowledgeBase
 from typing import List, Tuple, Dict, Set
@@ -68,11 +70,14 @@ class InferenceEngine:
     def is_safe(self, x: int, y: int) -> bool:
         is_pit = self.kb.query(self.kb.encode(Element.PIT, x, y))
         is_wumpus = self.kb.query(self.kb.encode(Element.WUMPUS, x, y))
+        is_poisonous_gas = self.kb.query(self.kb.encode(Element.POISONOUS_GAS, x, y))
         if is_pit:
             print(f"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Pit at {x, y}")
         if is_wumpus:
             print(f"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Wumpus at {x, y}")
-        return not is_pit and not is_wumpus
+        if is_poisonous_gas:
+            print(f"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Poisonous gas at {x, y}")
+        return not is_pit and not is_wumpus and not is_poisonous_gas
 
     # Evaluate the heuristic value of a given cell
     def evaluate_heuristic(self, x: int, y: int) -> int:

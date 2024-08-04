@@ -13,10 +13,10 @@ from utilities import (
     ActionHandler,
 )
 
-actionHandler = ActionHandler()
-INITIAL_POSITION = (0, 0)
+INITIAL_POSITION = (0, 0)  # Initial position of the agent
 
 
+# Agent class to represent the agent in the Wumpus World
 class Agent:
     def __init__(
         self,
@@ -24,22 +24,30 @@ class Agent:
         health: int = 100,
         grid_size: int = 4,
     ):
-        self.knowledge_base = KnowledgeBase(grid_size=grid_size)
-        self.inference_engine = InferenceEngine(knowledge_base=self.knowledge_base)
-        self.position = initial_position
-        self.health = health
-        self.grid_size = grid_size
-        self.score = 0
-        self.game_over = False
-        self.game_won = False
-        self.current_direction = Direction.NORTH
-        self.current_percepts: Set[Percept] = set()
-        self.current_action: List[Tuple[Action, int, int]] = []
-        self.grabbed_gold: Set[Tuple[int, int]] = set()
-        self.grabbed_HP: Set[Tuple[int, int]] = set()
-        self.visited: Set[Tuple[int, int]] = set()
-        self.parent: Dict[Tuple[int, int], Tuple[int, int]] = {}
-        self.healing_potions: int = 0
+        self.knowledge_base = KnowledgeBase(
+            grid_size=grid_size
+        )  # Initialize the knowledge base
+        self.inference_engine = InferenceEngine(
+            knowledge_base=self.knowledge_base
+        )  # Initialize the inference engine
+        self.position = initial_position  # Current position of the agent
+        self.health = health  # Health of the agent
+        self.grid_size = grid_size  # Size of the grid
+        self.score = 0  # Score of the agent
+        self.game_over = False  # Flag to indicate if the game is over
+        self.game_won = False  # Flag to indicate if the game is won
+        self.current_direction = Direction.NORTH  # Current direction of the agent
+        self.current_percepts: Set[Percept] = set()  # Current percepts of the agent
+        self.current_action: List[Tuple[Action, int, int]] = (
+            []
+        )  # Current action of the agent
+        self.grabbed_gold: Set[Tuple[int, int]] = set()  # Set of grabbed gold
+        self.grabbed_HP: Set[Tuple[int, int]] = set()  # Set of grabbed healing potions
+        self.visited: Set[Tuple[int, int]] = set()  # Set of visited cells
+        self.parent: Dict[Tuple[int, int], Tuple[int, int]] = (
+            {}
+        )  # Parent dictionary to store the parent of each cell
+        self.healing_potions: int = 0  # Number of healing potions grabbed
 
     # Main function to choose the next action
     def choose_action(
@@ -47,30 +55,31 @@ class Agent:
         percepts: List[Tuple[Percept, int, int]],
         element: Tuple[Element, int, int],
     ) -> str:
-        # Update the current percepts
-        self.visited.add(self.position)
-        print("Visited: ", self.visited)
-        self.current_percepts.clear()
-        for percept, x, y in percepts:
-            self.current_percepts.add(percept)
-        print("============= Agent: Choose Action =================")
-        # print("=============> Current percepts: ", self.current_percepts)
-        print("=============> Current elements: ", element)
-        # if element[0] == Element.GOLD or element[0] == Element.HEALING_POTION:
-        #     return self.select_action([(element[1], element[2])])
-        # Update the knowledge base with the new elements if elements is not None
-        self.inference_engine.add_element(self.position, element[0])
+        # Check if current position is visited (it means the agent is back to the parent node)
+        if self.position not in self.visited:
+            self.visited.add(self.position)
+            print("Visited: ", self.visited)
+            self.current_percepts.clear()
+            for percept, x, y in percepts:
+                self.current_percepts.add(percept)
+            print("============= Agent: Choose Action =================")
+            # print("=============> Current percepts: ", self.current_percepts)
+            print("=============> Current elements: ", element)
+            # Update the knowledge base with the new elements if elements is not None
+            self.inference_engine.add_element(self.position, element[0])
 
-        # Infer that there is no element except the current element at the current position
-        self.inference_engine.infer_not_elements(self.position, element[0])
-        # Get percepts that not exists in percepts
-        self.inference_engine.infer_not_percepts(self.position, self.current_percepts)
-        # Use inference to decide the next action
-        self.knowledge_base.update(percepts)
+            # Infer that there is no element except the current element at the current position
+            self.inference_engine.infer_not_elements(self.position, element[0])
+            # Get percepts that not exists in percepts
+            self.inference_engine.infer_not_percepts(
+                self.position, self.current_percepts
+            )
+            # Use inference to decide the next action
+            self.knowledge_base.update(percepts)
+            print("=============================================================")
         safe_moves = self.inference_engine.infer_safe_moves(
             self.position, self.grabbed_gold, self.grabbed_HP, self.visited
         )
-        print("=============================================================")
         return self.select_action(safe_moves)
 
     # Select an action based on the safe moves
@@ -78,6 +87,7 @@ class Agent:
         self, safe_moves: List[Tuple[int, int]]
     ) -> List[Tuple[Action, int, int]]:
         self.current_action = []
+        is_back = False
         # Select an action from safe moves
         print("============= Agent: Select Action =================")
         next_position = None
@@ -88,6 +98,7 @@ class Agent:
                 return "end"
             # If there is no safe move, then go back to the parent node and explore other paths
             next_position = self.parent[self.position]
+            is_back = True
             # self.game_over = True
             # return "end"
         else:
@@ -102,13 +113,13 @@ class Agent:
                 print("=============> Current action: ", self.current_action)
                 print("=============================================================")
                 # return self.current_action
-        self.parent[next_position] = self.position
-        print("=====> Parent of ", next_position, " is ", self.position)
+        if not is_back:
+            self.parent[next_position] = self.position
+        target_direction: Direction = get_target_direction(self.position, next_position)
+        print("=====> Parent of ", next_position, " is ", self.parent[next_position])
         print("=============> Current position: ", self.position)
         print("=============> Current direction: ", self.current_direction)
-        # print("=============> Safe moves: ", safe_moves)
         print("=============> Next position: ", next_position)
-        target_direction: Direction = get_target_direction(self.position, next_position)
         print("=============> Target direction: ", target_direction)
         print("=============> Current action: ", self.current_action)
         turn_actions: List[Action] = get_actions(
@@ -122,7 +133,6 @@ class Agent:
             self.current_action.append(
                 (Action.CLIMB, self.position[0], self.position[1])
             )
-        print("=============> Current action: ", self.current_action)
         print("=============================================================")
         return self.current_action
 
@@ -140,17 +150,20 @@ class Agent:
         return self.score
 
     def handle_forward(self):
+        self.score -= 10
         self.position = ActionHandler.handle_forward(
             self.position, self.current_direction
         )
         print("Current position: ", self.position)
 
     def turn_left(self) -> Direction:
+        self.score -= 10
         print("Before turning left: ", self.current_direction)
         self.current_direction = ActionHandler.turn_left(self.current_direction)
         print("After turning left: ", self.current_direction)
 
     def turn_right(self) -> Direction:
+        self.score -= 10
         self.current_direction = ActionHandler.turn_right(self.current_direction)
         print("Current direction: ", self.current_direction)
 
@@ -188,11 +201,13 @@ class Agent:
             self.grabbed_gold.add(position)
 
     def heal(self):
+        self.score -= 10
         if self.healing_potions > 0:
             self.health = 100 if self.health + 25 > 100 else self.health + 25
             self.healing_potions -= 1
 
     def handle_climb(self):
+        self.score += 10
         if self.position == INITIAL_POSITION:
             self.game_won = True
 
