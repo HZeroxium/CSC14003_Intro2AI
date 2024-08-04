@@ -19,6 +19,7 @@ class GraphicsManager:
     BLACK = (0, 0, 0)
     GRAY = (192, 192, 192)
     GREEN = (0, 255, 0)
+    RED = (255, 0, 0)
 
     @staticmethod
     def draw_grid(env, agent, screen, font):
@@ -43,7 +44,18 @@ class GraphicsManager:
                     (elem, row, col) in agent.dangerous_cells
                     for elem in [Element.PIT, Element.WUMPUS, Element.POISONOUS_GAS]
                 ):
-                    pygame.draw.rect(screen, GraphicsManager.GREEN, rect)
+                    print(
+                        "Highlighting dangerous cell:",
+                        env.cell_to_string(env.map[row][col]),
+                    )
+                    pygame.draw.rect(screen, GraphicsManager.RED, rect)
+                    element, x_ele, y_ele = env.get_element((row, col))
+                    text_surface = font.render(
+                        env.cell_to_string(env.map[row][col]),
+                        True,
+                        GraphicsManager.TEXT_COLOR,
+                    )
+                    screen.blit(text_surface, (x + 5, y + 5))
 
                 pygame.draw.rect(screen, GraphicsManager.GRID_COLOR, rect, 1)
 
