@@ -57,7 +57,7 @@ class KnowledgeBase:
         return not is_satisfiable
 
     def update(self, percepts: List[Tuple[Percept, int, int]]):
-        print("===================== Knowledge Base Update =====================")
+        # print("===================== Knowledge Base Update =====================")
         for percept, x, y in percepts:
             self.add_clause([self.encode(percept, x, y)])
         self.infer_new_knowledge()
@@ -82,9 +82,9 @@ class KnowledgeBase:
         return [KnowledgeBase.decode(literal) for literal in rule]
 
     def infer_new_knowledge(self):
-        print(
-            "===================== KnowledgeBase: Inferring New Knowledge ====================="
-        )
+        # print(
+        #     "===================== KnowledgeBase: Inferring New Knowledge ====================="
+        # )
         new_inferences = []
         for x in range(self.grid_size):
             for y in range(self.grid_size):
@@ -110,7 +110,7 @@ class KnowledgeBase:
                 self.encode(element, i, j) for i, j in adjacent_cells
             ]
             rule = [-percept_location_encoded] + possible_element_locations_encoded
-            print("+ Adding rule: ", self.decode_rule(rule))
+            # print("+ Adding rule: ", self.decode_rule(rule))
             self.add_clause(rule)
         return new_inferences
 

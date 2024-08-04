@@ -29,7 +29,7 @@ class InferenceEngine:
         visited: Set[Tuple[int, int]],
         dangerous_cells: Set[Tuple[Element, int, int]],
     ) -> List[Tuple[int, int]]:
-        print("======== InferenceEngine: Infer Safe Moves =================")
+        # print("======== InferenceEngine: Infer Safe Moves =================")
         x, y = position
         directions = get_adjacent_cells(x, y, self.kb.grid_size)
         evaluated_moves = []
@@ -50,8 +50,8 @@ class InferenceEngine:
                 self.add_dangerous_cell(i, j, dangerous_cells)
 
         evaluated_moves.sort(key=lambda x: x[1], reverse=True)
-        print("=================================================================")
-        print("Safe moves: ", [move for move, _ in evaluated_moves])
+        # print("=================================================================")
+        # print("Safe moves: ", [move for move, _ in evaluated_moves])
 
         if not evaluated_moves:
             not_visited_cells = self.get_not_visited_cells(visited)
@@ -78,12 +78,12 @@ class InferenceEngine:
         is_wumpus = self.kb.query(self.kb.encode(Element.WUMPUS, x, y))
         is_poisonous_gas = self.kb.query(self.kb.encode(Element.POISONOUS_GAS, x, y))
 
-        if is_pit:
-            print(f"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Pit at {x, y}")
-        if is_wumpus:
-            print(f"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Wumpus at {x, y}")
-        if is_poisonous_gas:
-            print(f"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Poisonous gas at {x, y}")
+        # if is_pit:
+        #     print(f"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Pit at {x, y}")
+        # if is_wumpus:
+        #     print(f"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Wumpus at {x, y}")
+        # if is_poisonous_gas:
+        #     print(f"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Poisonous gas at {x, y}")
 
         return not is_pit and not is_wumpus and not is_poisonous_gas
 
@@ -110,20 +110,20 @@ class InferenceEngine:
         for percept in Percept:
             if percept not in existing_percepts:
                 self.kb.add_clause([-self.kb.encode(percept, x, y)])
-                print(f"=============> Not {percept} at {position}")
+                # print(f"=============> Not {percept} at {position}")
 
     def infer_not_elements(self, position: Tuple[int, int], existing_element: Element):
         x, y = position
         for element in Element:
             if element != existing_element and element != Element.SAFE:
                 self.kb.add_clause([-self.kb.encode(element, x, y)])
-                print(f"=============> Not {element} at {position}")
+                # print(f"=============> Not {element} at {position}")
 
     def add_element(self, position: Tuple[int, int], element: Element):
         if element is not Element.AGENT:
             x, y = position
             self.kb.add_clause([self.kb.encode(element, x, y)])
-            print(f"=============> Add {element} at {position}")
+            # print(f"=============> Add {element} at {position}")
 
     def get_not_visited_cells(
         self, visited: Set[Tuple[int, int]]
