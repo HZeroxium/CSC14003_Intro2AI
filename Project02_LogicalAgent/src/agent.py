@@ -61,87 +61,19 @@ class Agent:
         # Check if current position is visited (it means the agent is back to the parent node)
         if self.position not in self.visited:
             self.visited.add(self.position)
-            print("Visited: ", self.visited)
             self.current_percepts.clear()
             for percept, x, y in percepts:
                 self.current_percepts.add(percept)
-            print("============= Agent: Choose Action =================")
-            # print("=============> Current percepts: ", self.current_percepts)
-            print("=============> Current elements: ", element)
-            # Update the knowledge base with the new elements if elements is not None
-            self.inference_engine.add_element(self.position, element[0])
 
-            # Infer that there is no element except the current element at the current position
+            self.inference_engine.add_element(self.position, element[0])
             self.inference_engine.infer_not_elements(self.position, element[0])
-            # Get percepts that not exists in percepts
             self.inference_engine.infer_not_percepts(
                 self.position, self.current_percepts
             )
             # Use inference to decide the next action
             self.knowledge_base.update(percepts)
-            print("=============================================================")
-        safe_moves = self.inference_engine.infer_safe_moves(
-            self.position,
-            self.grabbed_gold,
-            self.grabbed_HP,
-            self.visited,
-            self.dangerous_cells,
-        )
-        return self.select_action(safe_moves)
-
-    # Select an action based on the safe moves
-    def select_action(
-        self, safe_moves: List[Tuple[int, int]]
-    ) -> List[Tuple[Action, int, int]]:
-        self.current_action = []
-        is_back = False
-        # Select an action from safe moves
-        print("============= Agent: Select Action =================")
-        next_position = None
-        if not safe_moves:
-            # Check if all map is visited
-            if len(self.visited) == self.grid_size * self.grid_size:
-                self.game_over = True
-                return "end"
-            # If there is no safe move, then go back to the parent node and explore other paths
-            next_position = self.parent[self.position]
-            is_back = True
-            # self.game_over = True
-            # return "end"
-        else:
-            next_position = safe_moves[0]
-            if (
-                next_position == self.position
-            ):  # It mean the current position contain gold or healing potion
-                next_position = safe_moves[1]
-                self.current_action.append(
-                    (Action.GRAB, self.position[0], self.position[1])
-                )
-                print("=============> Current action: ", self.current_action)
-                print("=============================================================")
-                # return self.current_action
-        if not is_back:
-            self.parent[next_position] = self.position
-        target_direction: Direction = get_target_direction(self.position, next_position)
-        print("=====> Parent of ", next_position, " is ", self.parent[next_position])
-        print("=============> Current position: ", self.position)
-        print("=============> Current direction: ", self.current_direction)
-        print("=============> Next position: ", next_position)
-        print("=============> Target direction: ", target_direction)
-        print("=============> Current action: ", self.current_action)
-        turn_actions: List[Action] = get_actions(
-            self.current_direction, target_direction
-        )
-        # Perform the turn left, turn right actions to align the direction
-        self.current_action.extend(
-            [(action, self.position[0], self.position[1]) for action in turn_actions]
-        )
-        if next_position == INITIAL_POSITION:
-            self.current_action.append(
-                (Action.CLIMB, self.position[0], self.position[1])
-            )
-        print("=============================================================")
-        return self.current_action
+        safe_moves = self._infer_safe_moves()
+        return self._select_action(safe_moves)
 
     # Update the knowledge base with the new elements
     def update_knowledge(self, new_percept: Tuple[Percept, int, int]):
@@ -161,18 +93,14 @@ class Agent:
         self.position = ActionHandler.handle_forward(
             self.position, self.current_direction
         )
-        print("Current position: ", self.position)
 
     def turn_left(self) -> Direction:
         self.score -= 10
-        print("Before turning left: ", self.current_direction)
         self.current_direction = ActionHandler.turn_left(self.current_direction)
-        print("After turning left: ", self.current_direction)
 
     def turn_right(self) -> Direction:
         self.score -= 10
         self.current_direction = ActionHandler.turn_right(self.current_direction)
-        print("Current direction: ", self.current_direction)
 
     def handle_shoot(self, is_killed: bool):
         self.score -= 100
@@ -190,27 +118,29 @@ class Agent:
 
     def handle_grab(self, position: Tuple[int, int]):
         self.score -= 10
+        if self._is_healing_potion(position):
+            self.grabbed_HP.add(position)
+            self.healing_potions += 1
+        if self._is_gold(position):
+            self.score += 5000
+            self.grabbed_gold.add(position)
 
-        is_healing_potion = (
+    def _is_healing_potion(self, position: Tuple[int, int]) -> bool:
+        return (
             self.inference_engine.infer_healing_potion(position)
             and position not in self.grabbed_HP
         )
-        if is_healing_potion:
-            self.grabbed_HP.add(position)
-            self.healing_potions += 1
 
-        is_gold = (
+    def _is_gold(self, position: Tuple[int, int]) -> bool:
+        return (
             self.inference_engine.infer_gold(position)
             and position not in self.grabbed_gold
         )
-        if is_gold:
-            self.score += 5000
-            self.grabbed_gold.add(position)
 
     def heal(self):
         self.score -= 10
         if self.healing_potions > 0:
-            self.health = 100 if self.health + 25 > 100 else self.health + 25
+            self.health = min(100, self.health + 25)
             self.healing_potions -= 1
 
     def handle_climb(self):
@@ -218,24 +148,59 @@ class Agent:
         if self.position == INITIAL_POSITION:
             self.game_won = True
 
-    def get_percept_string(self):
-        percept_string = ""
-        for percept in self.current_percepts:
-            percept_string += f"{percept.name} "
-        if not percept_string:
-            percept_string = "None"
-        return percept_string
+    def get_percept_string(self) -> str:
+        return " ".join(percept.name for percept in self.current_percepts) or "None"
 
-    def get_action_string(self):
-        action_string = ""
-        for action in self.current_action:
-            action_string += f"{action[0].name} "
+    def get_action_string(self) -> str:
+        return " ".join(action[0].name for action in self.current_action)
 
-        return action_string
+    def get_dangerous_cells_str(self) -> str:
+        return ", ".join(
+            f"({element.value}, {x}, {y})" for element, x, y in self.dangerous_cells
+        )
 
-    def get_dangerous_cells_str(self):
-        # Get the string representation of dangerous cells
-        dangerous_cells_str = ""
-        for element, x, y in self.dangerous_cells:
-            dangerous_cells_str += f"({element.value}, {x}, {y}),"
-        return dangerous_cells_str
+    def _infer_safe_moves(self) -> List[Tuple[int, int]]:
+        return self.inference_engine.infer_safe_moves(
+            self.position,
+            self.grabbed_gold,
+            self.grabbed_HP,
+            self.visited,
+            self.dangerous_cells,
+        )
+
+    def _select_action(self, safe_moves: List[Tuple[int, int]]) -> str:
+        self.current_action = []
+        if not safe_moves:
+            return self._handle_no_safe_moves()
+        return self._handle_safe_moves(safe_moves)
+
+    def _handle_no_safe_moves(self) -> str:
+        if len(self.visited) == self.grid_size * self.grid_size:
+            self.game_over = True
+            return "end"
+        next_position = self.parent[self.position]
+        self._move_to_position(next_position, is_back=True)
+        return self.current_action
+
+    def _handle_safe_moves(self, safe_moves: List[Tuple[int, int]]) -> str:
+        next_position = safe_moves[0]
+        if next_position == self.position:
+            next_position = safe_moves[1]
+            self.current_action.append(
+                (Action.GRAB, self.position[0], self.position[1])
+            )
+        self._move_to_position(next_position)
+        if next_position == INITIAL_POSITION:
+            self.current_action.append(
+                (Action.CLIMB, self.position[0], self.position[1])
+            )
+        return self.current_action
+
+    def _move_to_position(self, next_position: Tuple[int, int], is_back: bool = False):
+        if not is_back:
+            self.parent[next_position] = self.position
+        target_direction = get_target_direction(self.position, next_position)
+        turn_actions = get_actions(self.current_direction, target_direction)
+        self.current_action.extend(
+            [(action, self.position[0], self.position[1]) for action in turn_actions]
+        )
