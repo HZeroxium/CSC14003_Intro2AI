@@ -1,15 +1,17 @@
+import pygame  # type: ignore
 from agent import Agent
 from environment import Environment
-import pygame  # type: ignore
 from graphics_manager import GraphicsManager
 
 
 def main():
+    # Initialize environment and agent
     env = Environment("../data/input/map5.txt")
     agent = Agent(
         initial_position=env.get_agent_position(), grid_size=env.get_map_size()
     )
 
+    # Initialize Pygame
     pygame.init()
     screen = pygame.display.set_mode(
         (GraphicsManager.SCREEN_WIDTH, GraphicsManager.SCREEN_HEIGHT)
@@ -20,9 +22,8 @@ def main():
     running = True
     next_step = False
 
+    # Initial screen setup
     screen.fill(GraphicsManager.BACKGROUND_COLOR)
-    GraphicsManager.draw_grid(env, agent, screen, font)
-    GraphicsManager.draw_info_panel(agent, screen, font, env=env)
     next_step_button = GraphicsManager.draw_button(
         screen=screen,
         text="Next",
@@ -33,32 +34,35 @@ def main():
         ),
     )
     pygame.display.update()
+
     step = 0
 
     while running and not (agent.is_game_over() or agent.is_game_won()):
-        print("========================================")
-        print(f"Step: {step}")
-        print("========================================")
-        step += 1
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-
         while not next_step:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    if next_step_button.collidepoint(event.pos):
-                        next_step = True
+                    break
+                if (
+                    event.type == pygame.MOUSEBUTTONDOWN
+                    and next_step_button.collidepoint(event.pos)
+                ):
+                    next_step = True
+
+        if not running:
+            break
+
+        step += 1
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+                break
 
         percepts = env.get_percept(agent.position)
         element = env.get_element(agent.position)
         actions = agent.choose_action(percepts, element)
-        new_percept = env.update(agent, actions)
-        agent.update_knowledge(new_percept)
-        next_step = False
 
+        # Update screen with the new state
         screen.fill(GraphicsManager.BACKGROUND_COLOR)
         GraphicsManager.draw_grid(env, agent, screen, font)
         GraphicsManager.draw_info_panel(agent, screen, font, env=env)
@@ -73,6 +77,11 @@ def main():
             ),
         )
         pygame.display.update()
+
+        new_percept = env.update(agent, actions)
+        agent.update_knowledge(new_percept)
+
+        next_step = False
 
     print(f"Final Score: {agent.get_score()}")
 
