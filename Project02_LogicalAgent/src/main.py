@@ -50,7 +50,7 @@ class Game:
             color=GraphicsManager.GREEN,
         )
         pygame.display.update()
-
+        
     def wait_for_next_step(self):
         """Wait for the user to click 'Play' or press Enter to proceed."""
         while not self.next_step:
@@ -58,11 +58,14 @@ class Game:
                 if event.type == pygame.QUIT:
                     self.running = False
                     break
-                if (
-                    (event.type == pygame.MOUSEBUTTONDOWN and self.next_step_button.collidepoint(event.pos))
-                    or (event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN)
-                ):
+                if event.type == pygame.MOUSEBUTTONDOWN and self.next_step_button.collidepoint(event.pos):
                     self.next_step = True
+
+            # Check if Enter key is pressed (held down)
+            keys = pygame.key.get_pressed()
+            if keys[pygame.K_RETURN]:
+                self.next_step = True
+
 
     def perform_step(self):
         """Perform the main game loop steps."""
@@ -137,10 +140,13 @@ class Game:
                     break
                 if event.type == pygame.MOUSEBUTTONDOWN and exit_button.collidepoint(event.pos):
                     running = False
-                elif event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
-                    running = False
 
-        pygame.display.update()
+            # Check if Enter key is pressed (held down)
+            keys = pygame.key.get_pressed()
+            if keys[pygame.K_RETURN]:
+                running = False
+
+            pygame.display.update()
 
 if __name__ == "__main__":
     game = Game("../data/input/map5.txt")
