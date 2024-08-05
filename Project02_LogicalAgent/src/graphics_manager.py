@@ -73,16 +73,17 @@ class GraphicsManager:
         screen.blit(text_surface, text_rect)
 
     @staticmethod
-    def draw_info_panel(agent, screen, font, env):
+    def draw_info_panel(agent, screen, font, env, current_position, previous_position):
         info_texts = [
             f"Score: {agent.get_score()}",
             f"Health: {agent.health}",
             f"Percepts: {agent.get_percept_string()}",
             f"Actions: {agent.get_action_string()}",
-            f"Agent Position: {agent.position}",
+            f"Agent Position: {current_position}",
             f"Agent Direction: {agent.current_direction.name}",
             f"Gold Grabbed: {len(agent.grabbed_gold)}",
             f"Healing Potions: {agent.healing_potions}",
+            f"Previous Position: {previous_position}",
         ]
 
         for i, text in enumerate(info_texts):

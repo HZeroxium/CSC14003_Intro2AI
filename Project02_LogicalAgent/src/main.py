@@ -96,6 +96,8 @@ class Game:
 
     def perform_step(self):
         """Perform the main game loop steps."""
+        previous_position = self.agent.position  # Track the previous position
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
@@ -107,7 +109,9 @@ class Game:
 
         self.screen.fill(GraphicsManager.BACKGROUND_COLOR)
         GraphicsManager.draw_grid(self.env, self.agent, self.screen, self.font)
-        GraphicsManager.draw_info_panel(self.agent, self.screen, self.font, self.env)
+
+        # Pass current and previous positions to the info panel
+        GraphicsManager.draw_info_panel(self.agent, self.screen, self.font, self.env, self.agent.position, previous_position)
 
         # Draw 'Next Step' button
         next_step_button = GraphicsManager.draw_button(
@@ -127,6 +131,7 @@ class Game:
         self.agent.log_actions()
 
         self.next_step = False
+
 
     def display_final_screen(self):
         """Display the final screen with the game result and an 'Exit' button."""
