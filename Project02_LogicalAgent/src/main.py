@@ -7,7 +7,7 @@ import time
 class Game:
     # Constants
     INITIAL_DELAY = 0.5  # Initial delay between steps in seconds
-    MIN_DELAY = 0.1  # Minimum delay between steps in seconds
+    MIN_DELAY = 0.05  # Minimum delay between steps in seconds
     DELAY_DECREASE_FACTOR = 0.9  # Factor by which the delay decreases (10%)
     FONT_SIZE = 72  # Font size for the final message
     TOP_LEFT_CORNER_X = 0
@@ -76,11 +76,16 @@ class Game:
                     self.running = False
                     pygame.quit()  # Ensure pygame shuts down properly
                     exit()  # Exit the program immediately
+
                 if event.type == pygame.MOUSEBUTTONDOWN and self.next_step_button.collidepoint(event.pos):
                     self.next_step = True
                     self.current_delay = Game.INITIAL_DELAY  # Reset delay for button click
+
                 if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
                     enter_key_pressed = True  # Enter key was just pressed
+
+                if event.type == pygame.KEYUP and event.key == pygame.K_RETURN:
+                    self.current_delay = Game.INITIAL_DELAY  # Reset the delay when Enter is released
 
             # Check if Enter key is pressed (held down)
             keys = pygame.key.get_pressed()
@@ -93,7 +98,7 @@ class Game:
                 self.current_delay = max(self.current_delay * Game.DELAY_DECREASE_FACTOR, Game.MIN_DELAY)
 
             pygame.display.update()
-
+    
     def perform_step(self):
         """Perform the main game loop steps."""
         previous_position = self.agent.position  # Track the previous position
