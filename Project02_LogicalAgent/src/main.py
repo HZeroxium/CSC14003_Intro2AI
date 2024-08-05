@@ -61,7 +61,8 @@ class Game:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.running = False
-                    break
+                    pygame.quit()  # Ensure pygame shuts down properly
+                    exit()  # Exit the program immediately
                 if event.type == pygame.MOUSEBUTTONDOWN and self.next_step_button.collidepoint(event.pos):
                     self.next_step = True
                     self.current_delay = 0.5  # Reset delay for button click
@@ -146,20 +147,17 @@ class Game:
     def wait_for_exit(self):
         """Wait for the user to click 'Exit' to close the game."""
         exit_button = self.display_final_screen()
-        
-        running = True
-        while running:
+
+        while self.running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    running = False
+                    self.running = False
                     break
-                if event.type == pygame.MOUSEBUTTONDOWN and exit_button.collidepoint(event.pos):
-                    running = False
-
-            # Check if Enter key is pressed (held down)
-            keys = pygame.key.get_pressed()
-            if keys[pygame.K_RETURN]:
-                running = False
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if exit_button.collidepoint(event.pos):
+                        self.running = False  # Exit immediately when the "Exit" button is clicked
+                        pygame.quit()  # Ensure pygame shuts down properly
+                        exit()  # Exit the program immediately
 
             pygame.display.update()
 
