@@ -2,6 +2,7 @@ import pygame  # type: ignore
 from agent import Agent
 from environment import Environment
 from graphics_manager import GraphicsManager
+import time
 
 class Game:
     def __init__(self, map_file):
@@ -25,6 +26,8 @@ class Game:
         self.running = True
         self.next_step = False
         self.step = 0
+        self.last_enter_press_time = 0
+        self.current_delay = 0.5
 
     def run(self):
         self.display_initial_screen()
@@ -51,6 +54,7 @@ class Game:
         )
         pygame.display.update()
         
+
     def wait_for_next_step(self):
         """Wait for the user to click 'Play' or press Enter to proceed."""
         while not self.next_step:
@@ -60,12 +64,23 @@ class Game:
                     break
                 if event.type == pygame.MOUSEBUTTONDOWN and self.next_step_button.collidepoint(event.pos):
                     self.next_step = True
+                    self.current_delay = 0.5  # Reset delay for button click
 
             # Check if Enter key is pressed (held down)
             keys = pygame.key.get_pressed()
             if keys[pygame.K_RETURN]:
-                self.next_step = True
+                current_time = time.time()
+                # Check if the specified delay time has passed since the last Enter key press
+                if current_time - self.last_enter_press_time >= self.current_delay:
+                    self.next_step = True
+                    self.last_enter_press_time = current_time
+                    # Decrease the delay by 10%, but not below 100ms
+                    self.current_delay = max(self.current_delay * 0.9, 0.1)
+            else:
+                # Reset delay if Enter is not being pressed
+                self.current_delay = 0.5
 
+            pygame.display.update()
 
     def perform_step(self):
         """Perform the main game loop steps."""
