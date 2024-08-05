@@ -53,10 +53,11 @@ class Game:
             color=GraphicsManager.GREEN,
         )
         pygame.display.update()
-        
 
     def wait_for_next_step(self):
         """Wait for the user to click 'Play' or press Enter to proceed."""
+        enter_key_pressed = False  # Flag to track if the Enter key was just pressed
+
         while not self.next_step:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -66,22 +67,28 @@ class Game:
                 if event.type == pygame.MOUSEBUTTONDOWN and self.next_step_button.collidepoint(event.pos):
                     self.next_step = True
                     self.current_delay = 0.5  # Reset delay for button click
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
+                    enter_key_pressed = True  # Enter key was just pressed
 
             # Check if Enter key is pressed (held down)
             keys = pygame.key.get_pressed()
-            if keys[pygame.K_RETURN]:
-                current_time = time.time()
-                # Check if the specified delay time has passed since the last Enter key press
-                if current_time - self.last_enter_press_time >= self.current_delay:
-                    self.next_step = True
-                    self.last_enter_press_time = current_time
-                    # Decrease the delay by 10%, but not below 100ms
-                    self.current_delay = max(self.current_delay * 0.9, 0.1)
-            else:
-                # Reset delay if Enter is not being pressed
-                self.current_delay = 0.5
+            current_time = time.time()
+
+            if enter_key_pressed:
+                # Immediate step for key press
+                self.next_step = True
+                self.last_enter_press_time = current_time
+                self.current_delay = 0.5  # Reset delay for button press
+            elif keys[pygame.K_RETURN] and current_time - self.last_enter_press_time >= self.current_delay:
+                # Sufficient delay has passed for a hold
+                self.next_step = True
+                self.last_enter_press_time = current_time
+                # Decrease the delay by 10%, but not below 100ms
+                self.current_delay = max(self.current_delay * 0.9, 0.1)
 
             pygame.display.update()
+
+
 
     def perform_step(self):
         """Perform the main game loop steps."""
