@@ -54,6 +54,7 @@ class Game:
     def display_initial_screen(self):
         """Display the initial screen with a 'Play' button."""
         self.screen.fill(GraphicsManager.BACKGROUND_COLOR)
+        # Store the button as an instance variable for later access
         self.next_step_button = GraphicsManager.draw_centered_button(
             screen=self.screen,
             text="Play",
@@ -63,7 +64,7 @@ class Game:
         pygame.display.update()
 
     def wait_for_next_step(self):
-        """Wait for the user to click 'Play' or press Enter to proceed."""
+        """Wait for the user to click 'Next Step' or press Enter to proceed."""
         enter_key_pressed = False  # Flag to track if the Enter key was just pressed
 
         while not self.next_step:
@@ -82,16 +83,10 @@ class Game:
             keys = pygame.key.get_pressed()
             current_time = time.time()
 
-            if enter_key_pressed:
-                # Immediate step for key press
+            if enter_key_pressed or (keys[pygame.K_RETURN] and current_time - self.last_enter_press_time >= self.current_delay):
+                # Immediate step for key press or sufficient delay has passed for a hold
                 self.next_step = True
                 self.last_enter_press_time = current_time
-                self.current_delay = Game.INITIAL_DELAY  # Reset delay for button press
-            elif keys[pygame.K_RETURN] and current_time - self.last_enter_press_time >= self.current_delay:
-                # Sufficient delay has passed for a hold
-                self.next_step = True
-                self.last_enter_press_time = current_time
-                # Decrease the delay by 10%, but not below 100ms
                 self.current_delay = max(self.current_delay * Game.DELAY_DECREASE_FACTOR, Game.MIN_DELAY)
 
             pygame.display.update()
@@ -120,8 +115,8 @@ class Game:
         # Pass step history to the info panel
         GraphicsManager.draw_info_panel(self.agent, self.screen, self.font, self.env, self.agent.position, previous_position, self.step_history)
 
-        # Draw 'Next Step' button
-        next_step_button = GraphicsManager.draw_button(
+        # Draw 'Next Step' button and store it as an instance variable
+        self.next_step_button = GraphicsManager.draw_button(
             screen=self.screen,
             text="Next Step",
             size=(GraphicsManager.BUTTON_WIDTH, GraphicsManager.BUTTON_HEIGHT),
@@ -138,7 +133,6 @@ class Game:
         self.agent.log_actions()
 
         self.next_step = False
-
     def display_final_screen(self):
         """Display the final screen with the game result and an 'Exit' button."""
         final_message = "You won!" if self.agent.is_game_won() else "You lost!"
