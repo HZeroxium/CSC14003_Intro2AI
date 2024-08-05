@@ -52,6 +52,11 @@ class Agent:
             set()
         )  # Set of dangerous cells
 
+    def get_data(self):
+        # Return a string with relevant agent data for display
+        return f"Position: {self.position}, Health: {self.health}, Score: {self.get_score()}"
+
+
     # Main function to choose the next action
     def choose_action(
         self,

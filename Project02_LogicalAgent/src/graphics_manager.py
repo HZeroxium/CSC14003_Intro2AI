@@ -5,7 +5,7 @@ from utilities import Element
 class GraphicsManager:
     MIN_CELL_SIZE = 50
     MAX_CELL_SIZE = 100
-    INFO_PANEL_WIDTH = 400
+    INFO_PANEL_WIDTH = 500
     FONT_SIZE = 24
     BACKGROUND_COLOR = (255, 255, 255)
     GRID_COLOR = (0, 0, 0)
@@ -71,9 +71,9 @@ class GraphicsManager:
         text_surface = font.render(text, True, GraphicsManager.TEXT_COLOR)
         text_rect = text_surface.get_rect(center=rect.center)
         screen.blit(text_surface, text_rect)
-
+    
     @staticmethod
-    def draw_info_panel(agent, screen, font, env, current_position, previous_position):
+    def draw_info_panel(agent, screen, font, env, current_position, previous_position, step_history):
         info_texts = [
             f"Score: {agent.get_score()}",
             f"Health: {agent.health}",
@@ -86,7 +86,10 @@ class GraphicsManager:
             f"Previous Position: {previous_position}",
         ]
 
-        for i, text in enumerate(info_texts):
+        # Combine info texts with step history, displaying history in reverse order
+        display_texts = info_texts + step_history[::-1]
+
+        for i, text in enumerate(display_texts):
             surface = font.render(text, True, GraphicsManager.TEXT_COLOR)
             screen.blit(
                 surface, (env.size * GraphicsManager.CELL_SIZE + 10, 10 + 30 * i)

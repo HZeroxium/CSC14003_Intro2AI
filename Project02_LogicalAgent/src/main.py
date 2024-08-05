@@ -35,6 +35,8 @@ class Game:
         self.last_enter_press_time = 0
         self.current_delay = Game.INITIAL_DELAY
 
+        self.step_history = []  # List to track the last 20 steps
+
     def run(self):
         self.display_initial_screen()
         
@@ -107,11 +109,16 @@ class Game:
         element = self.env.get_element(self.agent.position)
         actions = self.agent.choose_action(percepts, element)
 
+        # Update the step history with current step data
+        self.step_history.append(f"#step[{self.step}] -> {self.agent.get_data()}")
+        if len(self.step_history) > 20:  # Keep only the last 20 steps
+            self.step_history.pop(0)
+
         self.screen.fill(GraphicsManager.BACKGROUND_COLOR)
         GraphicsManager.draw_grid(self.env, self.agent, self.screen, self.font)
 
-        # Pass current and previous positions to the info panel
-        GraphicsManager.draw_info_panel(self.agent, self.screen, self.font, self.env, self.agent.position, previous_position)
+        # Pass step history to the info panel
+        GraphicsManager.draw_info_panel(self.agent, self.screen, self.font, self.env, self.agent.position, previous_position, self.step_history)
 
         # Draw 'Next Step' button
         next_step_button = GraphicsManager.draw_button(
@@ -131,7 +138,6 @@ class Game:
         self.agent.log_actions()
 
         self.next_step = False
-
 
     def display_final_screen(self):
         """Display the final screen with the game result and an 'Exit' button."""
