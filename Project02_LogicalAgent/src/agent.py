@@ -1,6 +1,6 @@
 from knowledge_base import KnowledgeBase
 from inference_engine import InferenceEngine
-from typing import Tuple, List, Set, Dict
+from typing import Tuple, List, Set, Dict, Optional
 from utilities import (
     Action,
     Direction,
@@ -10,6 +10,9 @@ from utilities import (
     get_target_direction,
     ActionHandler,
 )
+
+from collections import deque
+import heapq
 
 # Constants
 INITIAL_POSITION = (0, 0)  # Initial position of the agent
@@ -23,6 +26,7 @@ HEALTH_MAXIMUM = 100  # Maximum health the agent can have
 HEALTH_INCREASE_POTION = 25  # Health increase per healing potion
 LOG_FILE_NAME = "actions.log"  # Log file name for actions
 
+
 # Agent class to represent the agent in the Wumpus World
 class Agent:
     def __init__(
@@ -33,10 +37,10 @@ class Agent:
     ):
         # Initialize the knowledge base
         self.knowledge_base = KnowledgeBase(grid_size=grid_size)
-        
+
         # Initialize the inference engine
         self.inference_engine = InferenceEngine(knowledge_base=self.knowledge_base)
-        
+
         # Initial setup for the agent
         self.position = initial_position  # Current position of the agent
         self.health = health  # Health of the agent
@@ -46,13 +50,19 @@ class Agent:
         self.game_won = False  # Flag to indicate if the game is won
         self.current_direction = Direction.NORTH  # Current direction of the agent
         self.current_percepts: Set[Percept] = set()  # Current percepts of the agent
-        self.current_action: List[Tuple[Action, int, int]] = []  # Current action of the agent
+        self.current_action: List[Tuple[Action, int, int]] = (
+            []
+        )  # Current action of the agent
         self.grabbed_gold: Set[Tuple[int, int]] = set()  # Set of grabbed gold
         self.grabbed_HP: Set[Tuple[int, int]] = set()  # Set of grabbed healing potions
         self.visited: Set[Tuple[int, int]] = set()  # Set of visited cells
-        self.parent: Dict[Tuple[int, int], Tuple[int, int]] = {}  # Parent dictionary to store the parent of each cell
+        self.parent: Dict[Tuple[int, int], Tuple[int, int]] = (
+            {}
+        )  # Parent dictionary to store the parent of each cell
         self.healing_potions: int = 0  # Number of healing potions grabbed
-        self.dangerous_cells: Set[Tuple[Element, int, int]] = set()  # Set of dangerous cells
+        self.dangerous_cells: Set[Tuple[Element, int, int]] = (
+            set()
+        )  # Set of dangerous cells
 
     def get_data(self) -> str:
         """
@@ -79,7 +89,9 @@ class Agent:
             # Update the inference engine with current position elements and percepts
             self.inference_engine.add_element(self.position, element[0])
             self.inference_engine.infer_not_elements(self.position, element[0])
-            self.inference_engine.infer_not_percepts(self.position, self.current_percepts)
+            self.inference_engine.infer_not_percepts(
+                self.position, self.current_percepts
+            )
 
             # Update knowledge base with new percepts
             self.knowledge_base.update(percepts)
@@ -118,7 +130,9 @@ class Agent:
         Handle moving the agent forward
         """
         self.score -= SCORE_PENALTY_MOVE
-        self.position = ActionHandler.handle_forward(self.position, self.current_direction)
+        self.position = ActionHandler.handle_forward(
+            self.position, self.current_direction
+        )
 
     def turn_left(self) -> Direction:
         """
@@ -139,23 +153,29 @@ class Agent:
         Handle shooting action and update knowledge base if Wumpus is killed
         """
         self.score -= SCORE_PENALTY_SHOOT
-        shoot_position = ActionHandler.handle_forward(self.position, self.current_direction)
-        
+        shoot_position = ActionHandler.handle_forward(
+            self.position, self.current_direction
+        )
+
         if is_killed:
-            self.knowledge_base.add_clause([
-                -self.knowledge_base.encode(Element.WUMPUS, shoot_position[0], shoot_position[1])
-            ])
+            self.knowledge_base.add_clause(
+                [
+                    -self.knowledge_base.encode(
+                        Element.WUMPUS, shoot_position[0], shoot_position[1]
+                    )
+                ]
+            )
 
     def handle_grab(self, position: Tuple[int, int]):
         """
         Handle grabbing items (gold or healing potions) in the current position
         """
         self.score -= SCORE_PENALTY_MOVE
-        
+
         if self._is_healing_potion(position):
             self.grabbed_HP.add(position)
             self.healing_potions += 1
-        
+
         if self._is_gold(position):
             self.score += SCORE_REWARD_GOLD
             self.grabbed_gold.add(position)
@@ -164,13 +184,19 @@ class Agent:
         """
         Check if there is a healing potion at the specified position
         """
-        return self.inference_engine.infer_healing_potion(position) and position not in self.grabbed_HP
+        return (
+            self.inference_engine.infer_healing_potion(position)
+            and position not in self.grabbed_HP
+        )
 
     def _is_gold(self, position: Tuple[int, int]) -> bool:
         """
         Check if there is gold at the specified position
         """
-        return self.inference_engine.infer_gold(position) and position not in self.grabbed_gold
+        return (
+            self.inference_engine.infer_gold(position)
+            and position not in self.grabbed_gold
+        )
 
     def heal(self):
         """
@@ -207,7 +233,9 @@ class Agent:
         """
         Get a string representation of dangerous cells
         """
-        return ", ".join(f"({element.value}, {x}, {y})" for element, x, y in self.dangerous_cells)
+        return ", ".join(
+            f"({element.value}, {x}, {y})" for element, x, y in self.dangerous_cells
+        )
 
     def _infer_safe_moves(self) -> List[Tuple[int, int]]:
         """
@@ -226,22 +254,33 @@ class Agent:
         Select the next action based on inferred safe moves
         """
         self.current_action = []
-        
+
         if not safe_moves:
             return self._handle_no_safe_moves()
-        
+
         return self._handle_safe_moves(safe_moves)
 
     def _handle_no_safe_moves(self) -> str:
-        """
-        Handle scenario when there are no safe moves
-        """
-        if len(self.visited) == self.grid_size * self.grid_size:
-            self.game_over = True
-            return "end"
-        
-        next_position = self.parent[self.position]
-        self._move_to_position(next_position, is_back=True)
+        nearest_unvisited_neighbor = None
+        if (
+            len(self.visited) + len(self.dangerous_cells)
+            == self.grid_size * self.grid_size
+        ):
+            nearest_unvisited_neighbor = (
+                (0, 1) if self._is_safe_move((0, 1)) else (1, 0)
+            )
+
+        else:
+            nearest_unvisited_neighbor = self._find_nearest_unvisited_neighbor()
+
+        if nearest_unvisited_neighbor is None:
+            next_position = self.parent[self.position]
+        else:
+            path = self._find_path_to_safe_cell_near(nearest_unvisited_neighbor)
+            print("Path to", nearest_unvisited_neighbor, ":", path)
+            next_position = path[1] if len(path) > 1 else path[0]
+
+        self._move_to_position(next_position)
         return self.current_action
 
     def _handle_safe_moves(self, safe_moves: List[Tuple[int, int]]) -> str:
@@ -249,16 +288,20 @@ class Agent:
         Handle scenario when there are safe moves
         """
         next_position = safe_moves[0]
-        
+
         if next_position == self.position:
             next_position = safe_moves[1]
-            self.current_action.append((Action.GRAB, self.position[0], self.position[1]))
-        
+            self.current_action.append(
+                (Action.GRAB, self.position[0], self.position[1])
+            )
+
         self._move_to_position(next_position)
-        
+
         if next_position == INITIAL_POSITION:
-            self.current_action.append((Action.CLIMB, INITIAL_POSITION[0], INITIAL_POSITION[1]))
-        
+            self.current_action.append(
+                (Action.CLIMB, INITIAL_POSITION[0], INITIAL_POSITION[1])
+            )
+
         return self.current_action
 
     def _move_to_position(self, next_position: Tuple[int, int], is_back: bool = False):
@@ -267,10 +310,10 @@ class Agent:
         """
         if not is_back:
             self.parent[next_position] = self.position
-        
+
         target_direction = get_target_direction(self.position, next_position)
         turn_actions = get_actions(self.current_direction, target_direction)
-        
+
         self.current_action.extend(
             [(action, self.position[0], self.position[1]) for action in turn_actions]
         )
@@ -283,3 +326,104 @@ class Agent:
         with open(LOG_FILE_NAME, "a") as f:
             for action, x, y in self.current_action:
                 f.write(f"({x}, {y}): {action.name}\n")
+
+    def _find_nearest_unvisited(self) -> Tuple[int, int]:
+        min_distance = float("inf")
+        nearest_position = None
+        dangerous_cells: Set[Tuple[int, int]] = set()
+
+        for element, x, y in self.dangerous_cells:
+            dangerous_cells.add((x, y))
+        for row in range(self.grid_size):
+            for col in range(self.grid_size):
+                if (row, col) not in self.visited and (
+                    row,
+                    col,
+                ) not in dangerous_cells:
+                    distance = abs(row - self.position[0]) + abs(col - self.position[1])
+                    if distance < min_distance:
+                        min_distance = distance
+                        nearest_position = (row, col)
+
+        return nearest_position
+
+    def _find_path_to_safe_cell_near(
+        self, target: Tuple[int, int]
+    ) -> List[Tuple[int, int]]:
+        def heuristic(a: Tuple[int, int], b: Tuple[int, int]) -> int:
+            # Hàm heuristic sử dụng khoảng cách Manhattan
+            return abs(a[0] - b[0]) + abs(a[1] - b[1])
+
+        start = self.position
+        frontier = []
+        heapq.heappush(frontier, (0, start))
+        came_from = {start: None}
+        cost_so_far = {start: 0}
+
+        while frontier:
+            current_priority, current = heapq.heappop(frontier)
+
+            if current == target:
+                # Tìm thấy ô mục tiêu, xây dựng đường đi và trả về
+                path = []
+                while current is not None:
+                    path.append(current)
+                    current = came_from[current]
+                path.reverse()
+                return path
+
+            neighbors = self._get_neighbors(current)
+            for neighbor in neighbors:
+                if neighbor in self.visited:  # Chỉ xét các ô đã được visited
+                    new_cost = cost_so_far[current] + 1
+                    if neighbor not in cost_so_far or new_cost < cost_so_far[neighbor]:
+                        cost_so_far[neighbor] = new_cost
+                        priority = new_cost + heuristic(neighbor, target)
+                        heapq.heappush(frontier, (priority, neighbor))
+                        came_from[neighbor] = current
+
+        # Trường hợp không tìm thấy đường đi, trả về danh sách rỗng
+        return []
+
+    def _get_neighbors(self, position: Tuple[int, int]) -> List[Tuple[int, int]]:
+        neighbors = []
+        x, y = position
+        if x > 0:
+            neighbors.append((x - 1, y))
+        if x < self.grid_size - 1:
+            neighbors.append((x + 1, y))
+        if y > 0:
+            neighbors.append((x, y - 1))
+        if y < self.grid_size - 1:
+            neighbors.append((x, y + 1))
+        return neighbors
+
+    def _is_safe_move(self, position: Tuple[int, int]) -> bool:
+        return position in self.visited and position not in self.dangerous_cells
+
+    def _find_neighboring_visited_cells(self) -> List[Tuple[int, int]]:
+        neighboring_visited = []
+        dangerous_cells = set((x, y) for element, x, y in self.dangerous_cells)
+
+        for row in range(self.grid_size):
+            for col in range(self.grid_size):
+                if (row, col) not in self.visited and (row, col) not in dangerous_cells:
+                    neighbors = self._get_neighbors((row, col))
+                    for neighbor in neighbors:
+                        if neighbor in self.visited and neighbor not in dangerous_cells:
+                            neighboring_visited.append(neighbor)
+
+        return neighboring_visited
+
+    def _find_nearest_unvisited_neighbor(self) -> Optional[Tuple[int, int]]:
+        neighboring_visited = self._find_neighboring_visited_cells()
+        min_distance = float("inf")
+        nearest_position = None
+
+        for cell in neighboring_visited:
+            distance = abs(cell[0] - self.position[0]) + abs(cell[1] - self.position[1])
+            if distance < min_distance:
+                min_distance = distance
+                nearest_position = cell
+
+        return nearest_position
