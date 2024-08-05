@@ -3,67 +3,85 @@ from agent import Agent
 from environment import Environment
 from graphics_manager import GraphicsManager
 
+class Game:
+    def __init__(self, map_file):
+        pygame.init()
+        
+        # Set up environment and agent
+        self.env = Environment(map_file)
+        self.agent = Agent(
+            initial_position=self.env.get_agent_position(),
+            grid_size=self.env.get_map_size()
+        )
+        
+        # Set up graphics
+        GraphicsManager.set_dimensions(self.env.get_map_size())
+        self.screen = pygame.display.set_mode(
+            (GraphicsManager.SCREEN_WIDTH, GraphicsManager.SCREEN_HEIGHT)
+        )
+        pygame.display.set_caption("Wumpus World")
+        self.font = pygame.font.SysFont(None, GraphicsManager.FONT_SIZE)
+        
+        self.running = True
+        self.next_step = False
+        self.step = 0
 
-def main():
-    env = Environment("../data/input/map5.txt")
-    agent = Agent(
-        initial_position=env.get_agent_position(), grid_size=env.get_map_size()
-    )
+    def run(self):
+        self.display_initial_screen()
+        
+        while self.running and not (self.agent.is_game_over() or self.agent.is_game_won()):
+            self.wait_for_next_step()
+            if not self.running:
+                break
+            
+            self.step += 1
+            self.perform_step()
+        
+        self.display_final_screen()
+        self.wait_for_exit()
 
-    GraphicsManager.set_dimensions(env.get_map_size())
+    def display_initial_screen(self):
+        """Display the initial screen with a 'Play' button."""
+        self.screen.fill(GraphicsManager.BACKGROUND_COLOR)
+        self.next_step_button = GraphicsManager.draw_centered_button(
+            screen=self.screen,
+            text="Play",
+            size=(GraphicsManager.BUTTON_WIDTH, GraphicsManager.BUTTON_HEIGHT),
+            color=GraphicsManager.GREEN,
+        )
+        pygame.display.update()
 
-    pygame.init()
-    screen = pygame.display.set_mode(
-        (GraphicsManager.SCREEN_WIDTH, GraphicsManager.SCREEN_HEIGHT)
-    )
-    pygame.display.set_caption("Wumpus World")
-    font = pygame.font.SysFont(None, GraphicsManager.FONT_SIZE)
-
-    running = True
-    next_step = False
-
-    screen.fill(GraphicsManager.BACKGROUND_COLOR)
-    next_step_button = GraphicsManager.draw_centered_button(
-        screen=screen,
-        text="Play",
-        size=(GraphicsManager.BUTTON_WIDTH, GraphicsManager.BUTTON_HEIGHT),
-        color=GraphicsManager.GREEN,
-    )
-    pygame.display.update()
-
-    step = 0
-
-    while running and not (agent.is_game_over() or agent.is_game_won()):
-        while not next_step:
+    def wait_for_next_step(self):
+        """Wait for the user to click 'Play' or press Enter to proceed."""
+        while not self.next_step:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    running = False
+                    self.running = False
                     break
                 if (
-                    (event.type == pygame.MOUSEBUTTONDOWN and next_step_button.collidepoint(event.pos))
+                    (event.type == pygame.MOUSEBUTTONDOWN and self.next_step_button.collidepoint(event.pos))
                     or (event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN)
                 ):
-                    next_step = True
+                    self.next_step = True
 
-        if not running:
-            break
-
-        step += 1
+    def perform_step(self):
+        """Perform the main game loop steps."""
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                running = False
+                self.running = False
                 break
 
-        percepts = env.get_percept(agent.position)
-        element = env.get_element(agent.position)
-        actions = agent.choose_action(percepts, element)
+        percepts = self.env.get_percept(self.agent.position)
+        element = self.env.get_element(self.agent.position)
+        actions = self.agent.choose_action(percepts, element)
 
-        screen.fill(GraphicsManager.BACKGROUND_COLOR)
-        GraphicsManager.draw_grid(env, agent, screen, font)
-        GraphicsManager.draw_info_panel(agent, screen, font, env)
+        self.screen.fill(GraphicsManager.BACKGROUND_COLOR)
+        GraphicsManager.draw_grid(self.env, self.agent, self.screen, self.font)
+        GraphicsManager.draw_info_panel(self.agent, self.screen, self.font, self.env)
 
+        # Draw 'Next Step' button
         next_step_button = GraphicsManager.draw_button(
-            screen=screen,
+            screen=self.screen,
             text="Next Step",
             size=(GraphicsManager.BUTTON_WIDTH, GraphicsManager.BUTTON_HEIGHT),
             pos=(
@@ -74,52 +92,56 @@ def main():
         )
         pygame.display.update()
 
-        new_percept = env.update(agent, actions)
-        agent.update_knowledge(new_percept)
-        agent.log_actions()
+        new_percept = self.env.update(self.agent, actions)
+        self.agent.update_knowledge(new_percept)
+        self.agent.log_actions()
 
-        next_step = False
+        self.next_step = False
 
-    print(f"Final Score: {agent.get_score()}")
+    def display_final_screen(self):
+        """Display the final screen with the game result and an 'Exit' button."""
+        final_message = "You won!" if self.agent.is_game_won() else "You lost!"
+        self.screen.fill(GraphicsManager.BACKGROUND_COLOR)
+        GraphicsManager.draw_text(
+            self.screen,
+            final_message,
+            pygame.Rect(
+                0,
+                0,
+                GraphicsManager.SCREEN_WIDTH,
+                GraphicsManager.SCREEN_HEIGHT - 3 * GraphicsManager.BUTTON_HEIGHT,
+            ),
+            font=pygame.font.SysFont(None, 72),
+        )
 
-    final_message = "You won!" if agent.is_game_won() else "You lost!"
+        exit_color = GraphicsManager.GREEN if self.agent.is_game_won() else GraphicsManager.RED
+        exit_button = GraphicsManager.draw_centered_button(
+            screen=self.screen,
+            text="Exit",
+            size=(GraphicsManager.BUTTON_WIDTH, GraphicsManager.BUTTON_HEIGHT),
+            color=exit_color,
+        )
+        pygame.display.update()
 
-    screen.fill(GraphicsManager.BACKGROUND_COLOR)
-    GraphicsManager.draw_text(
-        screen,
-        final_message,
-        pygame.Rect(
-            0,
-            0,
-            GraphicsManager.SCREEN_WIDTH,
-            GraphicsManager.SCREEN_HEIGHT - 3 * GraphicsManager.BUTTON_HEIGHT,
-        ),
-        font=pygame.font.SysFont(None, 72),
-    )
+        return exit_button
+        
+    def wait_for_exit(self):
+        """Wait for the user to click 'Exit' to close the game."""
+        exit_button = self.display_final_screen()
+        
+        running = True
+        while running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+                    break
+                if event.type == pygame.MOUSEBUTTONDOWN and exit_button.collidepoint(event.pos):
+                    running = False
+                elif event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
+                    running = False
 
-    exit_color = GraphicsManager.GREEN if agent.is_game_won() else GraphicsManager.RED
-
-    exit_button = GraphicsManager.draw_centered_button(
-        screen=screen,
-        text="Exit",
-        size=(GraphicsManager.BUTTON_WIDTH, GraphicsManager.BUTTON_HEIGHT),
-        color=exit_color,
-    )
-    pygame.display.update()
-    # Wait for the user click the exit button
-    running = True
-    while running:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-                break
-            if event.type == pygame.MOUSEBUTTONDOWN and exit_button.collidepoint(
-                event.pos
-            ):
-                running = False
-
-    pygame.display.update()
-
+        pygame.display.update()
 
 if __name__ == "__main__":
-    main()
+    game = Game("../data/input/map5.txt")
+    game.run()
