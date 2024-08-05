@@ -5,7 +5,7 @@ from graphics_manager import GraphicsManager
 
 
 def main():
-    env = Environment("../data/input/map2.txt")
+    env = Environment("../data/input/map5.txt")
     agent = Agent(
         initial_position=env.get_agent_position(), grid_size=env.get_map_size()
     )
@@ -40,8 +40,8 @@ def main():
                     running = False
                     break
                 if (
-                    event.type == pygame.MOUSEBUTTONDOWN
-                    and next_step_button.collidepoint(event.pos)
+                    (event.type == pygame.MOUSEBUTTONDOWN and next_step_button.collidepoint(event.pos))
+                    or (event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN)
                 ):
                     next_step = True
 
