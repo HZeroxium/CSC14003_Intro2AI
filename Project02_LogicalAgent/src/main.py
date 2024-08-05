@@ -10,6 +10,9 @@ class Game:
     MIN_DELAY = 0.1  # Minimum delay between steps in seconds
     DELAY_DECREASE_FACTOR = 0.9  # Factor by which the delay decreases (10%)
     FONT_SIZE = 72  # Font size for the final message
+    TOP_LEFT_CORNER_X = 0
+    TOP_LEFT_CORNER_Y = 0
+    FINAL_SCREEN_MARGIN = 3
 
     def __init__(self, map_file):
         pygame.init()
@@ -133,6 +136,7 @@ class Game:
         self.agent.log_actions()
 
         self.next_step = False
+        
     def display_final_screen(self):
         """Display the final screen with the game result and an 'Exit' button."""
         final_message = "You won!" if self.agent.is_game_won() else "You lost!"
@@ -141,19 +145,19 @@ class Game:
             self.screen,
             final_message,
             pygame.Rect(
-                0,
-                0,
+                Game.TOP_LEFT_CORNER_X,
+                Game.TOP_LEFT_CORNER_Y,
                 GraphicsManager.SCREEN_WIDTH,
-                GraphicsManager.SCREEN_HEIGHT - 3 * GraphicsManager.BUTTON_HEIGHT,
+                GraphicsManager.SCREEN_HEIGHT - Game.FINAL_SCREEN_MARGIN * Game.BUTTON_HEIGHT,
             ),
-            font=pygame.font.SysFont(None, Game.FONT_SIZE),
+            font=pygame.font.SysFont(Game.FONT_TYPE, Game.FINAL_MESSAGE_FONT_SIZE),
         )
 
-        exit_color = GraphicsManager.GREEN if self.agent.is_game_won() else GraphicsManager.RED
+        exit_color = Game.BUTTON_EXIT_WIN_COLOR if self.agent.is_game_won() else Game.BUTTON_EXIT_LOSE_COLOR
         exit_button = GraphicsManager.draw_centered_button(
             screen=self.screen,
             text="Exit",
-            size=(GraphicsManager.BUTTON_WIDTH, GraphicsManager.BUTTON_HEIGHT),
+            size=(Game.BUTTON_WIDTH, Game.BUTTON_HEIGHT),
             color=exit_color,
         )
         pygame.display.update()
