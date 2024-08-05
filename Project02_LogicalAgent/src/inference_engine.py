@@ -68,10 +68,13 @@ class InferenceEngine:
     ):
         if self.kb.query(self.kb.encode(Element.WUMPUS, x, y)):
             dangerous_cells.add((Element.WUMPUS, x, y))
+            self.infer_not_elements((x, y), Element.WUMPUS)
         if self.kb.query(self.kb.encode(Element.PIT, x, y)):
             dangerous_cells.add((Element.PIT, x, y))
+            self.infer_not_elements((x, y), Element.PIT)
         if self.kb.query(self.kb.encode(Element.POISONOUS_GAS, x, y)):
             dangerous_cells.add((Element.POISONOUS_GAS, x, y))
+            self.infer_not_elements((x, y), Element.POISONOUS_GAS)
 
     def is_safe(self, x: int, y: int) -> bool:
         is_pit = self.kb.query(self.kb.encode(Element.PIT, x, y))
