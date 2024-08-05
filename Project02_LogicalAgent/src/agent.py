@@ -262,17 +262,18 @@ class Agent:
 
     def _handle_no_safe_moves(self) -> str:
         nearest_unvisited_neighbor = None
-        if (
-            len(self.visited) + len(self.dangerous_cells)
-            == self.grid_size * self.grid_size
-        ):
+        # Union of visited cells and dangerous cells is equal to the total number of cells
+        dangerous_cells: Set[Tuple[int, int]] = set()
+        for element, x, y in self.dangerous_cells:
+            dangerous_cells.add((x, y))
+        if len(self.visited.union(dangerous_cells)) == self.grid_size * self.grid_size:
             nearest_unvisited_neighbor = (
                 (0, 1) if self._is_safe_move((0, 1)) else (1, 0)
             )
 
         else:
             nearest_unvisited_neighbor = self._find_nearest_unvisited_neighbor()
-
+            print("Nearest unvisited neighbor:", nearest_unvisited_neighbor)
         if nearest_unvisited_neighbor is None:
             next_position = self.parent[self.position]
         else:
