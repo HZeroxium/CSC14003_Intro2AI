@@ -5,6 +5,12 @@ from graphics_manager import GraphicsManager
 import time
 
 class Game:
+    # Constants
+    INITIAL_DELAY = 0.5  # Initial delay between steps in seconds
+    MIN_DELAY = 0.1  # Minimum delay between steps in seconds
+    DELAY_DECREASE_FACTOR = 0.9  # Factor by which the delay decreases (10%)
+    FONT_SIZE = 72  # Font size for the final message
+
     def __init__(self, map_file):
         pygame.init()
         
@@ -27,7 +33,7 @@ class Game:
         self.next_step = False
         self.step = 0
         self.last_enter_press_time = 0
-        self.current_delay = 0.5
+        self.current_delay = Game.INITIAL_DELAY
 
     def run(self):
         self.display_initial_screen()
@@ -66,7 +72,7 @@ class Game:
                     exit()  # Exit the program immediately
                 if event.type == pygame.MOUSEBUTTONDOWN and self.next_step_button.collidepoint(event.pos):
                     self.next_step = True
-                    self.current_delay = 0.5  # Reset delay for button click
+                    self.current_delay = Game.INITIAL_DELAY  # Reset delay for button click
                 if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
                     enter_key_pressed = True  # Enter key was just pressed
 
@@ -78,17 +84,15 @@ class Game:
                 # Immediate step for key press
                 self.next_step = True
                 self.last_enter_press_time = current_time
-                self.current_delay = 0.5  # Reset delay for button press
+                self.current_delay = Game.INITIAL_DELAY  # Reset delay for button press
             elif keys[pygame.K_RETURN] and current_time - self.last_enter_press_time >= self.current_delay:
                 # Sufficient delay has passed for a hold
                 self.next_step = True
                 self.last_enter_press_time = current_time
                 # Decrease the delay by 10%, but not below 100ms
-                self.current_delay = max(self.current_delay * 0.9, 0.1)
+                self.current_delay = max(self.current_delay * Game.DELAY_DECREASE_FACTOR, Game.MIN_DELAY)
 
             pygame.display.update()
-
-
 
     def perform_step(self):
         """Perform the main game loop steps."""
@@ -137,7 +141,7 @@ class Game:
                 GraphicsManager.SCREEN_WIDTH,
                 GraphicsManager.SCREEN_HEIGHT - 3 * GraphicsManager.BUTTON_HEIGHT,
             ),
-            font=pygame.font.SysFont(None, 72),
+            font=pygame.font.SysFont(None, Game.FONT_SIZE),
         )
 
         exit_color = GraphicsManager.GREEN if self.agent.is_game_won() else GraphicsManager.RED
