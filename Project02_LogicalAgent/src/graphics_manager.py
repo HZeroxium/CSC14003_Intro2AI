@@ -1,13 +1,14 @@
 import pygame  # type: ignore
 from utilities import Element
 
+
 class GraphicsManager:
     # Constants for grid and cell configuration
     MIN_CELL_SIZE = 50
     MAX_CELL_SIZE = 100
     INFO_PANEL_WIDTH = 700
     SCREEN_CALC_DIVISOR = 1000  # Divisor to calculate cell size
-    FONT_SIZE_DIVISOR = 4       # Divisor to calculate font size from cell size
+    FONT_SIZE_DIVISOR = 4  # Divisor to calculate font size from cell size
 
     # Font sizes
     SMALL_FONT_SIZE = 14
@@ -46,7 +47,8 @@ class GraphicsManager:
         """
         # Calculate cell size to be within the min and max limits
         cls.CELL_SIZE = max(
-            cls.MIN_CELL_SIZE, min(cls.MAX_CELL_SIZE, cls.SCREEN_CALC_DIVISOR // grid_size)
+            cls.MIN_CELL_SIZE,
+            min(cls.MAX_CELL_SIZE, cls.SCREEN_CALC_DIVISOR // grid_size),
         )
         # Calculate screen width and height
         cls.SCREEN_WIDTH = cls.CELL_SIZE * grid_size + cls.INFO_PANEL_WIDTH
@@ -64,7 +66,10 @@ class GraphicsManager:
                 x_position = col_index * GraphicsManager.CELL_SIZE
                 y_position = row_index * GraphicsManager.CELL_SIZE
                 rect = pygame.Rect(
-                    x_position, y_position, GraphicsManager.CELL_SIZE, GraphicsManager.CELL_SIZE
+                    x_position,
+                    y_position,
+                    GraphicsManager.CELL_SIZE,
+                    GraphicsManager.CELL_SIZE,
                 )
 
                 # Determine cell color based on visited status
@@ -82,21 +87,37 @@ class GraphicsManager:
                 ):
                     pygame.draw.rect(screen, GraphicsManager.RED, rect)
                     GraphicsManager.draw_text(
-                        screen, env.cell_to_string(env.map[row_index][col_index]), rect, font
+                        screen,
+                        env.cell_to_string(env.map[row_index][col_index]),
+                        rect,
+                        font,
                     )
 
                 # Draw grid lines
-                pygame.draw.rect(screen, GraphicsManager.GRID_COLOR, rect, GraphicsManager.GRID_LINE_THICKNESS)
+                pygame.draw.rect(
+                    screen,
+                    GraphicsManager.GRID_COLOR,
+                    rect,
+                    GraphicsManager.GRID_LINE_THICKNESS,
+                )
 
                 # Render text for visited cells
                 if (row_index, col_index) in agent.visited:
                     GraphicsManager.draw_text(
-                        screen, env.cell_to_string(env.map[row_index][col_index]), rect, font
+                        screen,
+                        env.cell_to_string(env.map[row_index][col_index]),
+                        rect,
+                        font,
                     )
 
                 # Highlight agent's current position
                 if (row_index, col_index) == agent.position:
-                    pygame.draw.rect(screen, GraphicsManager.RED, rect, GraphicsManager.AGENT_HIGHLIGHT_THICKNESS)
+                    pygame.draw.rect(
+                        screen,
+                        GraphicsManager.RED,
+                        rect,
+                        GraphicsManager.AGENT_HIGHLIGHT_THICKNESS,
+                    )
 
     @staticmethod
     def draw_text(screen, text, rect, font):
@@ -106,14 +127,18 @@ class GraphicsManager:
         text_surface = font.render(text, True, GraphicsManager.TEXT_COLOR)
         text_rect = text_surface.get_rect(center=rect.center)
         screen.blit(text_surface, text_rect)
-        
+
     @staticmethod
-    def draw_info_panel(agent, screen, font, env, current_position, previous_position, step_history):
+    def draw_info_panel(
+        agent, screen, font, env, current_position, previous_position, step_history
+    ):
         """
         Display the information panel showing agent stats and step history using a smaller monospace font.
         """
         # Use a smaller monospace font for consistent character width
-        monospace_font = pygame.font.SysFont("Courier New", GraphicsManager.SMALL_FONT_SIZE)
+        monospace_font = pygame.font.SysFont(
+            "Courier New", GraphicsManager.SMALL_FONT_SIZE
+        )
 
         # List of informational text lines
         info_texts = [
@@ -126,6 +151,8 @@ class GraphicsManager:
             f"Gold Grabbed: {len(agent.grabbed_gold)}",
             f"Healing Potions: {agent.healing_potions}",
             f"Previous Position: {previous_position}",
+            f"Visited Cells: {len(agent.visited)}",
+            f"Dangerous Cells: {len(agent.dangerous_cells)}",
         ]
 
         # Combine info texts with step history, displaying history in reverse order
@@ -135,11 +162,14 @@ class GraphicsManager:
         for index, text in enumerate(display_texts):
             surface = monospace_font.render(text, True, GraphicsManager.TEXT_COLOR)
             screen.blit(
-                surface, (
-                    env.size * GraphicsManager.CELL_SIZE + GraphicsManager.TEXT_MARGIN_X, 
-                    GraphicsManager.TEXT_MARGIN_Y + GraphicsManager.TEXT_LINE_SPACING * index)
+                surface,
+                (
+                    env.size * GraphicsManager.CELL_SIZE
+                    + GraphicsManager.TEXT_MARGIN_X,
+                    GraphicsManager.TEXT_MARGIN_Y
+                    + GraphicsManager.TEXT_LINE_SPACING * index,
+                ),
             )
-
 
     @staticmethod
     def draw_button(screen, text, pos, size, color=None):
@@ -152,8 +182,10 @@ class GraphicsManager:
 
         # Draw button and border
         pygame.draw.rect(screen, color, rect)
-        pygame.draw.rect(screen, GraphicsManager.BLACK, rect, GraphicsManager.BUTTON_BORDER_THICKNESS)
-        
+        pygame.draw.rect(
+            screen, GraphicsManager.BLACK, rect, GraphicsManager.BUTTON_BORDER_THICKNESS
+        )
+
         # Render button text
         text_surface = font.render(text, True, GraphicsManager.BLACK)
         text_rect = text_surface.get_rect(center=rect.center)
@@ -175,8 +207,10 @@ class GraphicsManager:
 
         # Draw centered button and border
         pygame.draw.rect(screen, color, rect)
-        pygame.draw.rect(screen, GraphicsManager.BLACK, rect, GraphicsManager.BUTTON_BORDER_THICKNESS)
-        
+        pygame.draw.rect(
+            screen, GraphicsManager.BLACK, rect, GraphicsManager.BUTTON_BORDER_THICKNESS
+        )
+
         # Render button text
         text_surface = font.render(text, True, GraphicsManager.BLACK)
         text_rect = text_surface.get_rect(center=rect.center)
