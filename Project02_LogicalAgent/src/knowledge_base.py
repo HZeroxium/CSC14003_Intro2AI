@@ -1,6 +1,6 @@
 from pysat.formula import CNF  # type: ignore
 from pysat.solvers import Solver  # type: ignore
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Set
 from utilities import Percept, Element, PERCEPT_TO_ELEMENT
 from enum import Enum
 
@@ -60,7 +60,7 @@ class KnowledgeBase:
         # print("===================== Knowledge Base Update =====================")
         for percept, x, y in percepts:
             self.add_clause([self.encode(percept, x, y)])
-        self.infer_new_knowledge()
+        self.infer_new_knowledge(set())
 
     @staticmethod
     def encode(symbol: Enum, x: int, y: int) -> int:
@@ -81,7 +81,7 @@ class KnowledgeBase:
     def decode_rule(rule: List[int]) -> List[Tuple[Enum, int, int]]:
         return [KnowledgeBase.decode(literal) for literal in rule]
 
-    def infer_new_knowledge(self):
+    def infer_new_knowledge(self, dangerous_cells: Set[Tuple[Element, int, int]]):
         # print(
         #     "===================== KnowledgeBase: Inferring New Knowledge ====================="
         # )
@@ -94,8 +94,10 @@ class KnowledgeBase:
                 new_inferences.extend(self.infer_from_percept(Percept.WHIFF, x, y))
         for inference in new_inferences:
             self.add_clause(inference)
+            element, x, y = self.decode(inference[0])
+            dangerous_cells.add((element, x, y))
 
-    def infer_from_percept(self, percept: Percept, x: int, y: int) -> List[List[int]]:
+    def infer_from_percept(self, percept: Percept, x: int, y: int) -> List[int]:
         percept_location_encoded = self.encode(percept, x, y)
         new_inferences = []
         if self.query(percept_location_encoded):
@@ -112,6 +114,10 @@ class KnowledgeBase:
             rule = [-percept_location_encoded] + possible_element_locations_encoded
             # print("+ Adding rule: ", self.decode_rule(rule))
             self.add_clause(rule)
+            for location_encoded in possible_element_locations_encoded:
+                if self.query(location_encoded):
+                    new_inferences.append([location_encoded])
+                    print("+ Adding inference: ", self.decode_rule([location_encoded]))
         return new_inferences
 
 
