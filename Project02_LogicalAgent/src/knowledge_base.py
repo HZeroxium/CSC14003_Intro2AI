@@ -1,3 +1,30 @@
+# File: ./src/knowledge_base.py
+
+# This file defines the `KnowledgeBase` class used in the "Wumpus World" game.
+# It manages the agent's knowledge about the environment using a SAT solver to handle logical inferences. 
+# The knowledge base maintains facts about the environment in Conjunctive Normal Form (CNF) and 
+# interacts with the solver to add rules and query the state of the world. 
+# Key functionalities include encoding and decoding elements and percepts, adding rules, querying the knowledge base, 
+# and inferring new knowledge based on existing facts and percepts.
+
+# main.py
+#     └─game.py 
+#           ├──agent.py 
+#           │      ├──knowledge_base.py <-------------------------------------------
+#           │      │      ├── utilities.py
+#           │      │      ├── pysat.formula (external)
+#           │      │      └── pysat.solvers (external)
+#           │      └──inference_engine.py
+#           │             ├── knowledge_base.py
+#           │             └── utilities.py
+#           ├──environment.py
+#           │      └──utilities.py
+#           ├──graphics_manager.py
+#           │      ├──utilities.py
+#           │      └──info_panel_graphics.py
+#           │             └── pygame (external)
+#           └── pygame (external)
+
 from pysat.formula import CNF  # type: ignore
 from pysat.solvers import Solver  # type: ignore
 from typing import List, Tuple, Dict, Set

@@ -1,3 +1,30 @@
+# File: ./src/inference_engine.py
+
+# This file defines the `InferenceEngine` class used in the "Wumpus World" game.
+# It interacts with the agent's knowledge base to infer safe moves, evaluate heuristics, 
+# and identify dangerous cells. The engine uses heuristic values to guide the agent's decisions 
+# and maintains a set of rules to infer the presence or absence of elements and percepts 
+# in the environment. Key functionalities include inferring safe moves, adding dangerous cells, 
+# evaluating heuristic values, and updating the knowledge base with new information.
+
+# main.py
+#     └─game.py 
+#           ├──agent.py 
+#           │      ├──knowledge_base.py
+#           │      │      ├── utilities.py
+#           │      │      ├── pysat.formula (external)
+#           │      │      └── pysat.solvers (external)
+#           │      └──inference_engine.py <-------------------------------------------
+#           │             ├── knowledge_base.py
+#           │             └── utilities.py
+#           ├──environment.py
+#           │      └──utilities.py
+#           ├──graphics_manager.py
+#           │      ├──utilities.py
+#           │      └──info_panel_graphics.py
+#           │             └── pygame (external)
+#           └── pygame (external)
+
 from environment import Percept, Element
 from knowledge_base import KnowledgeBase
 from typing import List, Tuple, Set, Dict

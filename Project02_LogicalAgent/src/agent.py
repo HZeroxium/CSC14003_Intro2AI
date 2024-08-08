@@ -1,3 +1,29 @@
+# File: ./src/agent.py
+
+# This file defines the `Agent` class for the "Wumpus World" game. 
+# It handles the agent's movements, actions, and interactions with the game environment.
+# The agent maintains a knowledge base and inference engine to make decisions based on percepts and environment elements. 
+# Key functionalities include determining the next action, updating the agent's knowledge, handling movement, 
+# grabbing items, shooting, and logging actions. It also includes logic for finding safe moves and paths within the game grid.
+
+# main.py
+#     └─game.py 
+#           ├──agent.py <-------------------------------------------
+#           │      ├──knowledge_base.py
+#           │      │      ├── utilities.py
+#           │      │      ├── pysat.formula (external)
+#           │      │      └── pysat.solvers (external)
+#           │      └──inference_engine.py
+#           │             ├── knowledge_base.py
+#           │             └── utilities.py
+#           ├──environment.py
+#           │      └──utilities.py
+#           ├──graphics_manager.py
+#           │      ├──utilities.py
+#           │      └──info_panel_graphics.py
+#           │             └── pygame (external)
+#           └── pygame (external)
+
 from knowledge_base import KnowledgeBase
 from inference_engine import InferenceEngine
 from typing import Tuple, List, Set, Dict, Optional

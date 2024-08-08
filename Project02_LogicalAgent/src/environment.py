@@ -1,3 +1,29 @@
+# File: ./src/Environment.py
+
+# This file defines the `Environment` class for the "Wumpus World" game. 
+# It manages the game map, loads map data from a file, and updates the state of the map based on the agent's actions. 
+# Key functionalities include initializing and loading the map, handling percepts and elements within the map, 
+# updating the map state based on the agent's movements and actions, and managing interactions with elements 
+# like gold, healing potions, and dangers such as pits, Wumpus, and poisonous gas.
+
+# main.py
+#     └─game.py 
+#           ├──agent.py 
+#           │      ├──knowledge_base.py
+#           │      │      ├── utilities.py
+#           │      │      ├── pysat.formula (external)
+#           │      │      └── pysat.solvers (external)
+#           │      └──inference_engine.py
+#           │             ├── knowledge_base.py
+#           │             └── utilities.py
+#           ├──environment.py <-------------------------------------------
+#           │      └──utilities.py
+#           ├──graphics_manager.py
+#           │      ├──utilities.py
+#           │      └──info_panel_graphics.py
+#           │             └── pygame (external)
+#           └── pygame (external)
+
 from enum import Enum
 from typing import List, Tuple, Set
 from utilities import (

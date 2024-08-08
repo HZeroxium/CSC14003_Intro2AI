@@ -1,3 +1,29 @@
+# File: ./src/graphic_manager.py
+
+# This file manages the graphical components and user interface elements for the "Wumpus World" game using Pygame. 
+# It includes functionality for setting screen dimensions, drawing the game grid, rendering text, 
+# and displaying information panels. It also handles the creation and rendering of interactive buttons 
+# and other UI elements. Key components include methods for drawing the game grid, agent position, 
+# and various game states, as well as an information panel displaying agent stats and step history.
+
+# main.py
+#     └─game.py 
+#           ├──agent.py 
+#           │      ├──knowledge_base.py
+#           │      │      ├── utilities.py
+#           │      │      ├── pysat.formula (external)
+#           │      │      └── pysat.solvers (external)
+#           │      └──inference_engine.py
+#           │             ├── knowledge_base.py
+#           │             └── utilities.py
+#           ├──environment.py
+#           │      └──utilities.py
+#           ├──graphics_manager.py <-------------------------------------------
+#           │      ├──utilities.py
+#           │      └──info_panel_graphics.py
+#           │             └── pygame (external)
+#           └── pygame (external)
+
 import pygame  # type: ignore
 from utilities import Element
 from info_panel_graphics import HealthBar
