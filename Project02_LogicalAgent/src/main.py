@@ -4,6 +4,7 @@ from environment import Environment
 from graphics_manager import GraphicsManager
 import time
 
+
 class Game:
     # Constants
     INITIAL_DELAY = 0.5  # Initial delay between steps in seconds
@@ -13,17 +14,19 @@ class Game:
     TOP_LEFT_CORNER_X = 0
     TOP_LEFT_CORNER_Y = 0
     FINAL_SCREEN_MARGIN = 3
+    FINAL_MESSAGE_FONT_SIZE = 72
+    BUTTON_EXIT_WIN_COLOR = GraphicsManager.RED
 
     def __init__(self, map_file):
         pygame.init()
-        
+
         # Set up environment and agent
         self.env = Environment(map_file)
         self.agent = Agent(
             initial_position=self.env.get_agent_position(),
-            grid_size=self.env.get_map_size()
+            grid_size=self.env.get_map_size(),
         )
-        
+
         # Set up graphics
         GraphicsManager.set_dimensions(self.env.get_map_size())
         self.screen = pygame.display.set_mode(
@@ -31,7 +34,7 @@ class Game:
         )
         pygame.display.set_caption("Wumpus World")
         self.font = pygame.font.SysFont(None, GraphicsManager.FONT_SIZE)
-        
+
         self.running = True
         self.next_step = False
         self.step = 0
@@ -42,15 +45,17 @@ class Game:
 
     def run(self):
         self.display_initial_screen()
-        
-        while self.running and not (self.agent.is_game_over() or self.agent.is_game_won()):
+
+        while self.running and not (
+            self.agent.is_game_over() or self.agent.is_game_won()
+        ):
             self.wait_for_next_step()
             if not self.running:
                 break
-            
+
             self.step += 1
             self.perform_step()
-        
+
         self.display_final_screen()
         self.wait_for_exit()
 
@@ -77,28 +82,40 @@ class Game:
                     pygame.quit()  # Ensure pygame shuts down properly
                     exit()  # Exit the program immediately
 
-                if event.type == pygame.MOUSEBUTTONDOWN and self.next_step_button.collidepoint(event.pos):
+                if (
+                    event.type == pygame.MOUSEBUTTONDOWN
+                    and self.next_step_button.collidepoint(event.pos)
+                ):
                     self.next_step = True
-                    self.current_delay = Game.INITIAL_DELAY  # Reset delay for button click
+                    self.current_delay = (
+                        Game.INITIAL_DELAY
+                    )  # Reset delay for button click
 
                 if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
                     enter_key_pressed = True  # Enter key was just pressed
 
                 if event.type == pygame.KEYUP and event.key == pygame.K_RETURN:
-                    self.current_delay = Game.INITIAL_DELAY  # Reset the delay when Enter is released
+                    self.current_delay = (
+                        Game.INITIAL_DELAY
+                    )  # Reset the delay when Enter is released
 
             # Check if Enter key is pressed (held down)
             keys = pygame.key.get_pressed()
             current_time = time.time()
 
-            if enter_key_pressed or (keys[pygame.K_RETURN] and current_time - self.last_enter_press_time >= self.current_delay):
+            if enter_key_pressed or (
+                keys[pygame.K_RETURN]
+                and current_time - self.last_enter_press_time >= self.current_delay
+            ):
                 # Immediate step for key press or sufficient delay has passed for a hold
                 self.next_step = True
                 self.last_enter_press_time = current_time
-                self.current_delay = max(self.current_delay * Game.DELAY_DECREASE_FACTOR, Game.MIN_DELAY)
+                self.current_delay = max(
+                    self.current_delay * Game.DELAY_DECREASE_FACTOR, Game.MIN_DELAY
+                )
 
             pygame.display.update()
-    
+
     def perform_step(self):
         """Perform the main game loop steps."""
         previous_position = self.agent.position  # Track the previous position
@@ -121,7 +138,15 @@ class Game:
         GraphicsManager.draw_grid(self.env, self.agent, self.screen, self.font)
 
         # Pass step history to the info panel
-        GraphicsManager.draw_info_panel(self.agent, self.screen, self.font, self.env, self.agent.position, previous_position, self.step_history)
+        GraphicsManager.draw_info_panel(
+            self.agent,
+            self.screen,
+            self.font,
+            self.env,
+            self.agent.position,
+            previous_position,
+            self.step_history,
+        )
 
         # Draw 'Next Step' button and store it as an instance variable
         self.next_step_button = GraphicsManager.draw_button(
@@ -141,7 +166,7 @@ class Game:
         self.agent.log_actions()
 
         self.next_step = False
-        
+
     def display_final_screen(self):
         """Display the final screen with the game result and an 'Exit' button."""
         final_message = "You won!" if self.agent.is_game_won() else "You lost!"
@@ -153,22 +178,28 @@ class Game:
                 Game.TOP_LEFT_CORNER_X,
                 Game.TOP_LEFT_CORNER_Y,
                 GraphicsManager.SCREEN_WIDTH,
-                GraphicsManager.SCREEN_HEIGHT - Game.FINAL_SCREEN_MARGIN * Game.BUTTON_HEIGHT,
+                GraphicsManager.SCREEN_HEIGHT
+                - Game.FINAL_SCREEN_MARGIN * GraphicsManager.BUTTON_HEIGHT,
             ),
-            font=pygame.font.SysFont(Game.FONT_TYPE, Game.FINAL_MESSAGE_FONT_SIZE),
+            self.font,
+            # self.font=pygame.font.SysFont(Game.FONT_SIZE, Game.FINAL_MESSAGE_FONT_SIZE),
         )
 
-        exit_color = Game.BUTTON_EXIT_WIN_COLOR if self.agent.is_game_won() else Game.BUTTON_EXIT_LOSE_COLOR
+        exit_color = (
+            Game.BUTTON_EXIT_WIN_COLOR
+            if self.agent.is_game_won()
+            else Game.BUTTON_EXIT_LOSE_COLOR
+        )
         exit_button = GraphicsManager.draw_centered_button(
             screen=self.screen,
             text="Exit",
-            size=(Game.BUTTON_WIDTH, Game.BUTTON_HEIGHT),
+            size=(GraphicsManager.BUTTON_WIDTH, GraphicsManager.BUTTON_HEIGHT),
             color=exit_color,
         )
         pygame.display.update()
 
         return exit_button
-        
+
     def wait_for_exit(self):
         """Wait for the user to click 'Exit' to close the game."""
         exit_button = self.display_final_screen()
@@ -180,11 +211,14 @@ class Game:
                     break
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if exit_button.collidepoint(event.pos):
-                        self.running = False  # Exit immediately when the "Exit" button is clicked
+                        self.running = (
+                            False  # Exit immediately when the "Exit" button is clicked
+                        )
                         pygame.quit()  # Ensure pygame shuts down properly
                         exit()  # Exit the program immediately
 
             pygame.display.update()
+
 
 if __name__ == "__main__":
     game = Game("../data/input/map5.txt")
