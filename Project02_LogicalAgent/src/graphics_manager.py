@@ -1,5 +1,6 @@
 import pygame  # type: ignore
 from utilities import Element
+from info_panel_graphics import HealthBar
 
 
 class GraphicsManager:
@@ -7,7 +8,7 @@ class GraphicsManager:
     MIN_CELL_SIZE = 50
     MAX_CELL_SIZE = 100
     INFO_PANEL_WIDTH = 700
-    SCREEN_CALC_DIVISOR = 1000  # Divisor to calculate cell size
+    SCREEN_CALC_DIVISOR = 700  # Divisor to calculate cell size
     FONT_SIZE_DIVISOR = 4  # Divisor to calculate font size from cell size
 
     # Font sizes
@@ -39,6 +40,9 @@ class GraphicsManager:
     # Grid and agent visualization
     GRID_LINE_THICKNESS = 1
     AGENT_HIGHLIGHT_THICKNESS = 3
+
+    # Test graphic
+    health_bar = HealthBar()
 
     @classmethod
     def set_dimensions(cls, grid_size):
@@ -170,6 +174,9 @@ class GraphicsManager:
                     + GraphicsManager.TEXT_LINE_SPACING * index,
                 ),
             )
+
+        # Update and render health bar
+        GraphicsManager.health_bar.update_health_bar(screen, agent.health)
 
     @staticmethod
     def draw_button(screen, text, pos, size, color=None):
