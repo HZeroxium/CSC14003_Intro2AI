@@ -116,15 +116,19 @@ class KnowledgeBase:
 
 
 def main():
+    # Initialize the knowledge base with a grid size of 3
     knowledge_base = KnowledgeBase(grid_size=3)
+    # Add a fact that there is a breeze at (0, 0)
     knowledge_base.add_clause([knowledge_base.encode(Percept.BREEZE, 0, 0)])
+    # Infer new knowledge based on the existing facts
     knowledge_base.infer_new_knowledge()
+    # Add a fact that there is no pit at (0, 1)
     knowledge_base.add_clause([-knowledge_base.encode(Element.PIT, 0, 1)])
 
+    # Query the knowledge base to check if there is a pit at (1. 0) -> False
     if not knowledge_base.query(knowledge_base.encode(Element.PIT, 1, 0)):
         print("There is no pit at (1, 0)")
-
-    if knowledge_base.query(knowledge_base.encode(Element.PIT, 1, 0)):
+    else:
         print("There is a pit at (1, 0)")
 
 
