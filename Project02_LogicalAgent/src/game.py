@@ -10,12 +10,11 @@
 # main.py
 #     └─game.py <-------------------------------------------
 #           ├──agent.py
-#           │      ├──knowledge_base.py
-#           │      │      ├── utilities.py
-#           │      │      ├── pysat.formula (external)
-#           │      │      └── pysat.solvers (external)
 #           │      └──inference_engine.py
 #           │             ├── knowledge_base.py
+#           │             │       ├── utilities.py
+#           │             │       ├── pysat.formula (external)
+#           │             │       └── pysat.solvers (external)
 #           │             └── utilities.py
 #           ├──environment.py
 #           │      └──utilities.py

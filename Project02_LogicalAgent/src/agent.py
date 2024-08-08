@@ -9,12 +9,11 @@
 # main.py
 #     └─game.py 
 #           ├──agent.py <-------------------------------------------
-#           │      ├──knowledge_base.py
-#           │      │      ├── utilities.py
-#           │      │      ├── pysat.formula (external)
-#           │      │      └── pysat.solvers (external)
 #           │      └──inference_engine.py
 #           │             ├── knowledge_base.py
+#           │             │       ├── utilities.py
+#           │             │       ├── pysat.formula (external)
+#           │             │       └── pysat.solvers (external)
 #           │             └── utilities.py
 #           ├──environment.py
 #           │      └──utilities.py
@@ -24,8 +23,7 @@
 #           │             └── pygame (external)
 #           └── pygame (external)
 
-from knowledge_base import KnowledgeBase
-from inference_engine import InferenceEngine
+from inference_engine import InferenceEngine, KnowledgeBase 
 from typing import Tuple, List, Set, Dict, Optional
 from utilities import (
     Action,
