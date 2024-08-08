@@ -221,5 +221,5 @@ class Game:
 
 
 if __name__ == "__main__":
-    game = Game("../data/input/map5.txt")
+    game = Game("../data/input/map6.txt")
     game.run()
