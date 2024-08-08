@@ -105,7 +105,7 @@ class Agent:
         """
         Infer new knowledge based on new percepts
         """
-        self.knowledge_base.infer_new_knowledge()
+        self.knowledge_base.infer_new_knowledge(self.dangerous_cells)
 
     def is_game_over(self) -> bool:
         """
