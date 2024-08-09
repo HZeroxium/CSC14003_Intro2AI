@@ -317,7 +317,7 @@ class Agent:
         """
         next_position = safe_moves[0]
 
-        if next_position == self.position:
+        if len(safe_moves) > 1 and next_position == self.position:
             next_position = safe_moves[1]
             self.current_action.append(
                 (Action.GRAB, self.position[0], self.position[1])
@@ -331,6 +331,10 @@ class Agent:
             )
 
         return self.current_action
+    
+    def _is_position_within_bounds(self, position):
+        x, y = position
+        return 0 <= x < self.environment.get_map_size() and 0 <= y < self.environment.get_map_size()
 
     def _move_to_position(self, next_position: Tuple[int, int], is_back: bool = False):
         """
