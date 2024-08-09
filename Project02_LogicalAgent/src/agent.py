@@ -135,6 +135,9 @@ class Agent:
         """
         Check if the game is over
         """
+        if self.health == 0:
+            self.game_over = True
+        
         return self.game_over
 
     def is_game_won(self) -> bool:
