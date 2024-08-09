@@ -1,6 +1,32 @@
+# File: ./src/knowledge_base.py
+
+# This file defines the `KnowledgeBase` class used in the "Wumpus World" game.
+# It manages the agent's knowledge about the environment using a SAT solver to handle logical inferences. 
+# The knowledge base maintains facts about the environment in Conjunctive Normal Form (CNF) and 
+# interacts with the solver to add rules and query the state of the world. 
+# Key functionalities include encoding and decoding elements and percepts, adding rules, querying the knowledge base, 
+# and inferring new knowledge based on existing facts and percepts.
+
+# main.py
+#     └─game.py 
+#           ├──agent.py 
+#           │      └──inference_engine.py
+#           │             ├── knowledge_base.py <-------------------------------------------
+#           │             │       ├── utilities.py
+#           │             │       ├── pysat.formula (external)
+#           │             │       └── pysat.solvers (external)
+#           │             └── utilities.py
+#           ├──environment.py
+#           │      └──utilities.py
+#           ├──graphics_manager.py
+#           │      ├──utilities.py
+#           │      └──info_panel_graphics.py
+#           │             └── pygame (external)
+#           └── pygame (external)
+
 from pysat.formula import CNF  # type: ignore
 from pysat.solvers import Solver  # type: ignore
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Set
 from utilities import Percept, Element, PERCEPT_TO_ELEMENT
 from enum import Enum
 
@@ -60,7 +86,7 @@ class KnowledgeBase:
         # print("===================== Knowledge Base Update =====================")
         for percept, x, y in percepts:
             self.add_clause([self.encode(percept, x, y)])
-        self.infer_new_knowledge()
+        self.infer_new_knowledge(set())
 
     @staticmethod
     def encode(symbol: Enum, x: int, y: int) -> int:
@@ -81,7 +107,7 @@ class KnowledgeBase:
     def decode_rule(rule: List[int]) -> List[Tuple[Enum, int, int]]:
         return [KnowledgeBase.decode(literal) for literal in rule]
 
-    def infer_new_knowledge(self):
+    def infer_new_knowledge(self, dangerous_cells: Set[Tuple[Element, int, int]]):
         # print(
         #     "===================== KnowledgeBase: Inferring New Knowledge ====================="
         # )
@@ -94,8 +120,10 @@ class KnowledgeBase:
                 new_inferences.extend(self.infer_from_percept(Percept.WHIFF, x, y))
         for inference in new_inferences:
             self.add_clause(inference)
+            element, x, y = self.decode(inference[0])
+            dangerous_cells.add((element, x, y))
 
-    def infer_from_percept(self, percept: Percept, x: int, y: int) -> List[List[int]]:
+    def infer_from_percept(self, percept: Percept, x: int, y: int) -> List[int]:
         percept_location_encoded = self.encode(percept, x, y)
         new_inferences = []
         if self.query(percept_location_encoded):
@@ -112,19 +140,27 @@ class KnowledgeBase:
             rule = [-percept_location_encoded] + possible_element_locations_encoded
             # print("+ Adding rule: ", self.decode_rule(rule))
             self.add_clause(rule)
+            for location_encoded in possible_element_locations_encoded:
+                if self.query(location_encoded):
+                    new_inferences.append([location_encoded])
+                    print("+ Adding inference: ", self.decode_rule([location_encoded]))
         return new_inferences
 
 
 def main():
+    # Initialize the knowledge base with a grid size of 3
     knowledge_base = KnowledgeBase(grid_size=3)
+    # Add a fact that there is a breeze at (0, 0)
     knowledge_base.add_clause([knowledge_base.encode(Percept.BREEZE, 0, 0)])
+    # Infer new knowledge based on the existing facts
     knowledge_base.infer_new_knowledge()
+    # Add a fact that there is no pit at (0, 1)
     knowledge_base.add_clause([-knowledge_base.encode(Element.PIT, 0, 1)])
 
+    # Query the knowledge base to check if there is a pit at (1. 0) -> False
     if not knowledge_base.query(knowledge_base.encode(Element.PIT, 1, 0)):
         print("There is no pit at (1, 0)")
-
-    if knowledge_base.query(knowledge_base.encode(Element.PIT, 1, 0)):
+    else:
         print("There is a pit at (1, 0)")
 
 

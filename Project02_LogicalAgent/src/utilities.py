@@ -1,6 +1,14 @@
+# File: ./src/utilities.py
+
+# This file defines utility classes and functions for the "Wumpus World" game. 
+# It includes enumerations for actions, directions, percepts, and elements, 
+# as well as mappings between elements and percepts. 
+# Key functionalities include determining target directions and actions needed to reach them, 
+# handling movement and shooting actions, and converting between different game states.
+# It also provides helper functions to support the agent's decision-making and movement logic.
+
 from enum import Enum
 from typing import List, Tuple, Dict
-
 
 class Action(Enum):
     FORWARD = "forward"

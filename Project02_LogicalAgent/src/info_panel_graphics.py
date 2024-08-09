@@ -1,3 +1,27 @@
+# File: ./src/info_panel_graphics.py
+
+# This file defines the `HealthBar` class, which manages the graphical representation of the agent's health bar 
+# in the "Wumpus World" game using Pygame. It includes functionality to initialize the health bar, update it based on 
+# the agent's current health, and visually transition the health bar when health changes occur. 
+# The health bar is displayed on the screen and visually updates to reflect the agent's health status.
+
+# main.py
+#     └─game.py 
+#           ├──agent.py 
+#           │      └──inference_engine.py
+#           │             ├── knowledge_base.py
+#           │             │       ├── utilities.py
+#           │             │       ├── pysat.formula (external)
+#           │             │       └── pysat.solvers (external)
+#           │             └── utilities.py
+#           ├──environment.py
+#           │      └──utilities.py
+#           ├──graphics_manager.py
+#           │      ├──utilities.py
+#           │      └──info_panel_graphics.py <-------------------------------------------
+#           │             └── pygame (external)
+#           └── pygame (external)
+
 import pygame
 
 # COLOURS
@@ -7,8 +31,6 @@ RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 YELLOW = (255, 255, 0)
-
-
 
 # X,Y position
 HEALTHBAR_X_Index = 800
