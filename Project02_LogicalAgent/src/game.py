@@ -195,7 +195,7 @@ class Game:
 
     def display_final_screen(self):
         """Display the final screen with the game result and an 'Exit' button."""
-        final_message = "You won!" if self.agent.is_game_won() else "You lost!"
+        final_message = "You won!" if self.agent.is_game_won() else "You lose!"
         self.screen.fill(GraphicsManager.BACKGROUND_COLOR)
         GraphicsManager.draw_text(
             self.screen,

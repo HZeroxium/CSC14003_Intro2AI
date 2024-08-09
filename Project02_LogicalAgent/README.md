@@ -77,7 +77,7 @@ Your group must play two roles:
 - **Program**: set up a program to build the map.
 - **Agent**: explore the Wumpus world and get the highest score possible for that world, using either Propositional Logic and First-Order Logic (or both).
 
-Your implementation should *output information about the search*, including the *percepts at every room the agent enters*, the *updates in the knowledge base after each new percept*, and the *action decided upon by the agent*. The program should also *output the score ò the agent*.
+Your implementation should *output information about the search*, including the *percepts at every room the agent enters*, the *updates in the knowledge base after each new percept*, and the *action decided upon by the agent*. The program should also *output the score of the agent*.
 
 Having your implementation generate worlds randomly can help you test your agent.
 
