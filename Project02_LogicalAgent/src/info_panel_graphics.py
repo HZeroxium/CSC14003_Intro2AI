@@ -44,17 +44,19 @@ class HealthBar(pygame.sprite.Sprite):
 
         transition_width = 0
         transition_color = RED
+        isGetHealth = False
 
         if self.current_health < self.target_health:
             self.current_health = min(self.current_health + self.health_change_speed, self.target_health)
             transition_width = int((self.target_health - self.current_health) / self.health_ratio)
             transition_color = GREEN
+            isGetHealth = True
         elif self.current_health > self.target_health:
             self.current_health = max(self.current_health - self.health_change_speed, self.target_health)
             transition_width = int((self.current_health - self.target_health) / self.health_ratio)
             transition_color = YELLOW
 
-        health_bar_rect = pygame.Rect(HEALTHBAR_X_Index, HEALTHBAR_Y_Index, self.current_health / self.health_ratio, 25)
+        health_bar_rect = pygame.Rect(HEALTHBAR_X_Index, HEALTHBAR_Y_Index, (self.current_health if isGetHealth else self.target_health) / self.health_ratio, 25)
         transition_bar_rect = pygame.Rect(health_bar_rect.right, HEALTHBAR_Y_Index, transition_width, 25)
 
         pygame.draw.rect(screen, RED, health_bar_rect)

@@ -48,6 +48,7 @@ class Game:
             if not self.running:
                 break
             
+
             self.step += 1
             self.perform_step()
         
@@ -187,5 +188,7 @@ class Game:
             pygame.display.update()
 
 if __name__ == "__main__":
-    game = Game("../data/input/map5.txt")
+    game = Game("../data/input/map9.txt")
     game.run()
+
+
