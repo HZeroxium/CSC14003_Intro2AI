@@ -40,8 +40,8 @@ class Game:
     TOP_LEFT_CORNER_Y = 0
     FINAL_SCREEN_MARGIN = 3
     FINAL_MESSAGE_FONT_SIZE = 72
-    BUTTON_EXIT_WIN_COLOR = GraphicsManager.RED
-    BUTTON_EXIT_LOSE_COLOR = GraphicsManager.GREEN
+    BUTTON_EXIT_WIN_COLOR = GraphicsManager.GREEN
+    BUTTON_EXIT_LOSE_COLOR = GraphicsManager.RED
 
     def __init__(self, map_file):
         pygame.init()
@@ -195,7 +195,13 @@ class Game:
 
     def display_final_screen(self):
         """Display the final screen with the game result and an 'Exit' button."""
-        final_message = "You won!" if self.agent.is_game_won() else "You lose!"
+        final_message = (
+            "You won!" if self.agent.is_game_won()
+            else "You fell into a pit!" if self.agent.fall_down 
+            else "You are eaten by the Wumpus!" if self.agent.be_eaten 
+            else "You lose!"
+        )
+
         self.screen.fill(GraphicsManager.BACKGROUND_COLOR)
         GraphicsManager.draw_text(
             self.screen,

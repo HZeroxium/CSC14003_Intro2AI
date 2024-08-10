@@ -100,8 +100,13 @@ class Environment:
             elif action == Action.FORWARD:
                 agent.handle_forward()
                 self.visited[x][y] = True
-                if Element.PIT in self.map[x][y] or Element.WUMPUS in self.map[x][y]:
+                if Element.PIT in self.map[x][y]:
                     agent.game_over = True
+                    agent.fall_down = True
+                    return
+                if Element.WUMPUS in self.map[x][y]:
+                    agent.game_over = True
+                    agent.be_eaten = True
                     return
                 if Element.POISONOUS_GAS in self.map[x][y]:
                     agent.health -= 25

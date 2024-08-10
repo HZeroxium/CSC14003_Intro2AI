@@ -71,6 +71,8 @@ class Agent:
         self.grid_size = grid_size  # Size of the grid
         self.score = 0  # Score of the agent
         self.game_over = False  # Flag to indicate if the game is over
+        self.be_eaten = False # Flag to indicate if the agent is eater by th Wumpus
+        self.fall_down = False # Flag to indicate if the agent falls into a pit
         self.game_won = False  # Flag to indicate if the game is won
         self.current_direction = Direction.NORTH  # Current direction of the agent
         self.current_percepts: Set[Percept] = set()  # Current percepts of the agent
@@ -202,6 +204,7 @@ class Agent:
         if self._is_healing_potion(position):
             self.grabbed_HP.add(position)
             self.healing_potions += 1
+            self.heal()
 
         if self._is_gold(position):
             self.score += SCORE_REWARD_GOLD

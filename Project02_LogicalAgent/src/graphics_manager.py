@@ -169,10 +169,12 @@ class GraphicsManager:
             "Courier New", GraphicsManager.SMALL_FONT_SIZE
         )
 
+
+
         # List of informational text lines
         info_texts = [
             f"Score: {agent.get_score()}",
-            f"Health: {agent.health}",
+            f"   ",
             f"Percepts: {agent.get_percept_string()}",
             f"Actions: {agent.get_action_string()}",
             f"Agent Position: {current_position}",
@@ -199,6 +201,8 @@ class GraphicsManager:
                     + GraphicsManager.TEXT_LINE_SPACING * index,
                 ),
             )
+
+
 
         # Update and render health bar
         GraphicsManager.health_bar.update_health_bar(screen, agent.health)
