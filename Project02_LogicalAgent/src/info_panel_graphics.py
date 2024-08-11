@@ -39,7 +39,22 @@ HEALTH_BAR_Y_INDEX = 5
 HEART_ICON_X_INDEX = 710
 HEART_ICON_Y_INDEX = 5
 GOLD_ICON_X_INDEX  = 710
-GOLD_ICON_Y_INDEX  = 65
+GOLD_ICON_Y_INDEX  = 35
+SCORE_ICON_X_INDEX = 698
+SCORE_ICON_Y_INDEX = 65
+
+
+class Info_Panel():
+    def __init__(self):
+        self.health_bar = HealthBar()
+        self.gold = Gold()
+        self.score = Score()
+    
+    def update_info_panel(self, screen, agent):
+        self.health_bar.update_health_bar(screen, agent.health)
+        self.gold.update_gold(screen, agent)
+        self.score.update_score(screen)
+
 
 class HealthBar(pygame.sprite.Sprite):
     def __init__(self):
@@ -87,16 +102,47 @@ class Gold():
     def __init__(self) -> None:
         pass
 
-    def update_gold(self, screen, agent, current_position):
+    def update_gold(self, screen, agent):
         gold_icon = pygame.image.load(f"../data/image/gold.png")
         screen.blit(gold_icon, (GOLD_ICON_X_INDEX, GOLD_ICON_Y_INDEX))
 
-        if agent._is_gold(current_position):
+        if agent._is_gold(agent.position):
             monospace_font = pygame.font.SysFont("Courier New", 14)
             surface = monospace_font.render('+5000', True, GOLD)
             
             screen.blit(surface, (GOLD_ICON_X_INDEX + (60 if len(agent.grabbed_gold) == 0 else
                                                        80 if len(agent.grabbed_gold) * 5000 <= 5000 
                                                        else 100),
-                                 GOLD_ICON_Y_INDEX + 5))
+                                  GOLD_ICON_Y_INDEX + 5))
+            
+
+class Score():
+    def __init__(self) -> None:
+        pass
+
+    @staticmethod
+    def update_score(screen):
+        score_icon = pygame.image.load(f"../data/image/score.png")
+        screen.blit(score_icon, (SCORE_ICON_X_INDEX, SCORE_ICON_Y_INDEX))
+
+class Direction():
+    def __init__(self) -> None:
+        pass
+    
+    #FORWARD + NORTH = UP
+    def forward(screen, agent): 
         
+        pass
+    #FORWARD + EAST = RIGHT
+    
+    #FORWARD + SOUTH = DOWN
+    
+    #FORWARD + WEST = LEFT
+
+    # TURN_RIGHT +
+
+    # TURN_RIGHT +
+
+    # TURN_RIGHT +
+
+    # TURN_RIGHT +

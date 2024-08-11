@@ -25,7 +25,7 @@
 
 import pygame  # type: ignore
 from utilities import Element
-from info_panel_graphics import HealthBar, Gold
+from info_panel_graphics import Info_Panel
 
 
 class GraphicsManager:
@@ -68,8 +68,7 @@ class GraphicsManager:
     AGENT_HIGHLIGHT_THICKNESS = 3
 
     # Test graphic
-    health_bar = HealthBar()
-    gold = Gold()
+    INFO_PANEL = Info_Panel()
 
     @classmethod
     def set_dimensions(cls, grid_size):
@@ -176,13 +175,12 @@ class GraphicsManager:
         # List of informational text lines
         info_texts = [
             f"   ", # Health bar
-            f"Score: {agent.get_score()}",
-            f"   : {len(agent.grabbed_gold) * 5000}", # Gold
+            f"     {len(agent.grabbed_gold) * 5000}", # Gold
+            f"       {agent.get_score()}",
             f"Percepts: {agent.get_percept_string()}",
             f"Actions: {agent.get_action_string()}",
             f"Agent Position: {current_position}",
             f"Agent Direction: {agent.current_direction.name}",
-            f"Healing Potions: {agent.healing_potions}",
             f"Previous Position: {previous_position}",
             f"Visited Cells: {len(agent.visited)}",
             f"Dangerous Cells: {len(agent.dangerous_cells)}",
@@ -204,11 +202,8 @@ class GraphicsManager:
                 ),
             )
 
-        # Update and render health bar
-        GraphicsManager.health_bar.update_health_bar(screen, agent.health)
-
-        # Update and render gold
-        GraphicsManager.gold.update_gold(screen, agent, current_position)
+        # Update info panel
+        GraphicsManager.INFO_PANEL.update_info_panel(screen, agent)
         
 
     @staticmethod

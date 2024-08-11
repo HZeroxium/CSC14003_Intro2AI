@@ -22,7 +22,7 @@
 from game import Game
 
 if __name__ == "__main__":
-    game = Game("../data/input/map8.txt")
+    game = Game("../data/input/map5.txt")
     game.run()
 
 
