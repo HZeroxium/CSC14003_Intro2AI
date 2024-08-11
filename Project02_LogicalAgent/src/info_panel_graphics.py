@@ -31,12 +31,15 @@ RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 YELLOW = (255, 255, 0)
+GOLD = (218, 109, 0)
 
 # X,Y position
 HEALTH_BAR_X_INDEX = 750
-HEALTH_BAR_Y_INDEX = 35
+HEALTH_BAR_Y_INDEX = 5
 HEART_ICON_X_INDEX = 710
-HEART_ICON_Y_INDEX = 35
+HEART_ICON_Y_INDEX = 5
+GOLD_ICON_X_INDEX  = 710
+GOLD_ICON_Y_INDEX  = 65
 
 class HealthBar(pygame.sprite.Sprite):
     def __init__(self):
@@ -79,3 +82,21 @@ class HealthBar(pygame.sprite.Sprite):
         # Draw health as heart icons
         heart_icon = pygame.image.load(f"../data/image/heart_{self.target_health}.png")
         screen.blit(heart_icon, (HEART_ICON_X_INDEX, HEART_ICON_Y_INDEX))
+
+class Gold():
+    def __init__(self) -> None:
+        pass
+
+    def update_gold(self, screen, agent, current_position):
+        gold_icon = pygame.image.load(f"../data/image/gold.png")
+        screen.blit(gold_icon, (GOLD_ICON_X_INDEX, GOLD_ICON_Y_INDEX))
+
+        if agent._is_gold(current_position):
+            monospace_font = pygame.font.SysFont("Courier New", 14)
+            surface = monospace_font.render('+5000', True, GOLD)
+            
+            screen.blit(surface, (GOLD_ICON_X_INDEX + (60 if len(agent.grabbed_gold) == 0 else
+                                                       80 if len(agent.grabbed_gold) * 5000 <= 5000 
+                                                       else 100),
+                                 GOLD_ICON_Y_INDEX + 5))
+        
