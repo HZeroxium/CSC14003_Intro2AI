@@ -134,11 +134,12 @@ class Score():
 
 class Movements():
     def __init__(self) -> None:
+        self.direction = ['NORTH', 'EAST', 'SOUTH', 'WEST']
+        self.current_direction = 0
         pass
 
     def update_movements(self, screen, agent):
         actions = agent.get_action_string().split(', ')
-        direction = agent.current_direction.name
 
         forward_direction = {
             'FORWARD_NORTH': 'UP',
@@ -149,11 +150,19 @@ class Movements():
 
         for i, a in enumerate(actions):
             if a == 'FORWARD':
-                action_icon = pygame.image.load(f"../data/image/{forward_direction[a + '_' + direction]}.png")
+                action_icon = pygame.image.load(f"../data/image/{forward_direction[a + "_" + self.direction[self.current_direction] ]}.png")
                 screen.blit(action_icon, (30 * i + MOVEMENT_ICON_X_INDEX, MOVEMENT_ICON_Y_INDEX))
-            else:
+            elif a == 'TURN_LEFT':
+                self.current_direction = (self.current_direction + 4 - 1) % 4
                 rotate_icon = pygame.image.load(f'../data/image/{a}.png')
                 screen.blit(rotate_icon, (30 * i + MOVEMENT_ICON_X_INDEX, MOVEMENT_ICON_Y_INDEX))
+            elif a == 'TURN_RIGHT':
+                self.current_direction = (self.current_direction + 4 + 1) % 4
+                rotate_icon = pygame.image.load(f'../data/image/{a}.png')
+                screen.blit(rotate_icon, (30 * i + MOVEMENT_ICON_X_INDEX, MOVEMENT_ICON_Y_INDEX))
+            else:
+                grab_icon = pygame.image.load(f'../data/image/{a}.png')
+                screen.blit(grab_icon, (30 * i + MOVEMENT_ICON_X_INDEX, MOVEMENT_ICON_Y_INDEX))
 
         compass_icon = pygame.image.load(f"../data/image/compass.png")
         screen.blit(compass_icon, (COMPASS_ICON_X_INDEX, COMPASS_ICON_Y_INDEX))
