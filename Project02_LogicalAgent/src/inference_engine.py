@@ -1,15 +1,15 @@
 # File: ./src/inference_engine.py
 
 # This file defines the `InferenceEngine` class used in the "Wumpus World" game.
-# It interacts with the agent's knowledge base to infer safe moves, evaluate heuristics, 
-# and identify dangerous cells. The engine uses heuristic values to guide the agent's decisions 
-# and maintains a set of rules to infer the presence or absence of elements and percepts 
-# in the environment. Key functionalities include inferring safe moves, adding dangerous cells, 
+# It interacts with the agent's knowledge base to infer safe moves, evaluate heuristics,
+# and identify dangerous cells. The engine uses heuristic values to guide the agent's decisions
+# and maintains a set of rules to infer the presence or absence of elements and percepts
+# in the environment. Key functionalities include inferring safe moves, adding dangerous cells,
 # evaluating heuristic values, and updating the knowledge base with new information.
 
 # main.py
-#     └─game.py 
-#           ├──agent.py 
+#     └─game.py
+#           ├──agent.py
 #           │      └──inference_engine.py <-------------------------------------------
 #           │             ├── knowledge_base.py
 #           │             │       ├── utilities.py
@@ -54,6 +54,7 @@ class InferenceEngine:
         grabbed_HP: Set[Tuple[int, int]],
         visited: Set[Tuple[int, int]],
         dangerous_cells: Set[Tuple[Element, int, int]],
+        agent_start: Tuple[int, int],
     ) -> List[Tuple[int, int]]:
         # print("======== InferenceEngine: Infer Safe Moves =================")
         x, y = position
@@ -82,10 +83,11 @@ class InferenceEngine:
         if not evaluated_moves:
             not_visited_cells = self.get_not_visited_cells(visited)
             not_safe_cells = self.get_not_safe_cells(visited)
-            if not_visited_cells == not_safe_cells and (0, 0) in get_adjacent_cells(
-                x, y, self.kb.grid_size
+            if (
+                not_visited_cells == not_safe_cells
+                and agent_start in get_adjacent_cells(x, y, self.kb.grid_size)
             ):
-                return [(0, 0)]
+                return [agent_start]
 
         return [move for move, _ in evaluated_moves]
 
