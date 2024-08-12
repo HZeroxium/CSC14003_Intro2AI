@@ -323,6 +323,11 @@ class Agent:
             print("Path to", nearest_unvisited_neighbor, ":", path)
             next_position = path[1] if len(path) > 1 else path[0]
 
+        if self.inference_engine.infer_gold(self.position):
+            self.current_action.append(
+                (Action.GRAB, self.position[0], self.position[1])
+            )
+
         self._move_to_position(next_position)
         return self.current_action
 
