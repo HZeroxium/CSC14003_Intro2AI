@@ -1,15 +1,15 @@
 # File: ./src/knowledge_base.py
 
 # This file defines the `KnowledgeBase` class used in the "Wumpus World" game.
-# It manages the agent's knowledge about the environment using a SAT solver to handle logical inferences. 
-# The knowledge base maintains facts about the environment in Conjunctive Normal Form (CNF) and 
-# interacts with the solver to add rules and query the state of the world. 
-# Key functionalities include encoding and decoding elements and percepts, adding rules, querying the knowledge base, 
+# It manages the agent's knowledge about the environment using a SAT solver to handle logical inferences.
+# The knowledge base maintains facts about the environment in Conjunctive Normal Form (CNF) and
+# interacts with the solver to add rules and query the state of the world.
+# Key functionalities include encoding and decoding elements and percepts, adding rules, querying the knowledge base,
 # and inferring new knowledge based on existing facts and percepts.
 
 # main.py
-#     └─game.py 
-#           ├──agent.py 
+#     └─game.py
+#           ├──agent.py
 #           │      └──inference_engine.py
 #           │             ├── knowledge_base.py <-------------------------------------------
 #           │             │       ├── utilities.py
@@ -121,7 +121,8 @@ class KnowledgeBase:
         for inference in new_inferences:
             self.add_clause(inference)
             element, x, y = self.decode(inference[0])
-            dangerous_cells.add((element, x, y))
+            if element != Element.GOLD:
+                dangerous_cells.add((element, x, y))
 
     def infer_from_percept(self, percept: Percept, x: int, y: int) -> List[int]:
         percept_location_encoded = self.encode(percept, x, y)
@@ -143,7 +144,7 @@ class KnowledgeBase:
             for location_encoded in possible_element_locations_encoded:
                 if self.query(location_encoded):
                     new_inferences.append([location_encoded])
-                    print("+ Adding inference: ", self.decode_rule([location_encoded]))
+                    # print("+ Adding inference: ", self.decode_rule([location_encoded]))
         return new_inferences
 
 
