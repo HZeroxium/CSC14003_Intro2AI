@@ -176,11 +176,11 @@ class GraphicsManager:
         info_texts = [
             f"   ", # Health bar
             f"     {len(agent.grabbed_gold) * 5000}", # Gold
-            f"       {agent.get_score()}",
+            f"       {agent.get_score()}", # Score
+            f"        ", # Action + Direction
+            f"        ", # Action + Direction
             f"Percepts: {agent.get_percept_string()}",
-            f"Actions: {agent.get_action_string()}",
             f"Agent Position: {current_position}",
-            f"Agent Direction: {agent.current_direction.name}",
             f"Previous Position: {previous_position}",
             f"Visited Cells: {len(agent.visited)}",
             f"Dangerous Cells: {len(agent.dangerous_cells)}",

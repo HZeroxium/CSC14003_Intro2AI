@@ -17,6 +17,7 @@
 #           │      ├──utilities.py
 #           │      └──info_panel_graphics.py
 #           │             └── pygame (external)
+
 #           └── pygame (external)
 
 from game import Game

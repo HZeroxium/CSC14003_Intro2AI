@@ -42,6 +42,10 @@ GOLD_ICON_X_INDEX  = 710
 GOLD_ICON_Y_INDEX  = 35
 SCORE_ICON_X_INDEX = 698
 SCORE_ICON_Y_INDEX = 65
+COMPASS_ICON_X_INDEX = 715
+COMPASS_ICON_Y_INDEX = 95
+MOVEMENT_ICON_X_INDEX = 770
+MOVEMENT_ICON_Y_INDEX = 107
 
 
 class Info_Panel():
@@ -49,11 +53,13 @@ class Info_Panel():
         self.health_bar = HealthBar()
         self.gold = Gold()
         self.score = Score()
+        self.movements = Movements()
     
     def update_info_panel(self, screen, agent):
         self.health_bar.update_health_bar(screen, agent.health)
         self.gold.update_gold(screen, agent)
         self.score.update_score(screen)
+        self.movements.update_movements(screen, agent)
 
 
 class HealthBar(pygame.sprite.Sprite):
@@ -125,24 +131,29 @@ class Score():
         score_icon = pygame.image.load(f"../data/image/score.png")
         screen.blit(score_icon, (SCORE_ICON_X_INDEX, SCORE_ICON_Y_INDEX))
 
-class Direction():
+
+class Movements():
     def __init__(self) -> None:
         pass
-    
-    #FORWARD + NORTH = UP
-    def forward(screen, agent): 
-        
-        pass
-    #FORWARD + EAST = RIGHT
-    
-    #FORWARD + SOUTH = DOWN
-    
-    #FORWARD + WEST = LEFT
 
-    # TURN_RIGHT +
+    def update_movements(self, screen, agent):
+        actions = agent.get_action_string().split(', ')
+        direction = agent.current_direction.name
 
-    # TURN_RIGHT +
+        forward_direction = {
+            'FORWARD_NORTH': 'UP',
+            'FORWARD_EAST': 'RIGHT',
+            'FORWARD_SOUTH': 'DOWN',
+            'FORWARD_WEST': 'LEFT'
+        }
 
-    # TURN_RIGHT +
+        for i, a in enumerate(actions):
+            if a == 'FORWARD':
+                action_icon = pygame.image.load(f"../data/image/{forward_direction[a + '_' + direction]}.png")
+                screen.blit(action_icon, (30 * i + MOVEMENT_ICON_X_INDEX, MOVEMENT_ICON_Y_INDEX))
+            else:
+                rotate_icon = pygame.image.load(f'../data/image/{a}.png')
+                screen.blit(rotate_icon, (30 * i + MOVEMENT_ICON_X_INDEX, MOVEMENT_ICON_Y_INDEX))
 
-    # TURN_RIGHT +
+        compass_icon = pygame.image.load(f"../data/image/compass.png")
+        screen.blit(compass_icon, (COMPASS_ICON_X_INDEX, COMPASS_ICON_Y_INDEX))
