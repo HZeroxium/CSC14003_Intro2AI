@@ -1,13 +1,13 @@
 # File: ./src/agent.py
 
-# This file defines the `Agent` class for the "Wumpus World" game. 
+# This file defines the `Agent` class for the "Wumpus World" game.
 # It handles the agent's movements, actions, and interactions with the game environment.
-# The agent maintains a knowledge base and inference engine to make decisions based on percepts and environment elements. 
-# Key functionalities include determining the next action, updating the agent's knowledge, handling movement, 
+# The agent maintains a knowledge base and inference engine to make decisions based on percepts and environment elements.
+# Key functionalities include determining the next action, updating the agent's knowledge, handling movement,
 # grabbing items, shooting, and logging actions. It also includes logic for finding safe moves and paths within the game grid.
 
 # main.py
-#     └─game.py 
+#     └─game.py
 #           ├──agent.py <-------------------------------------------
 #           │      └──inference_engine.py
 #           │             ├── knowledge_base.py
@@ -23,7 +23,7 @@
 #           │             └── pygame (external)
 #           └── pygame (external)
 
-from inference_engine import InferenceEngine, KnowledgeBase 
+from inference_engine import InferenceEngine, KnowledgeBase, get_adjacent_cells
 from typing import Tuple, List, Set, Dict, Optional
 from utilities import (
     Action,
@@ -39,7 +39,6 @@ from collections import deque
 import heapq
 
 # Constants
-INITIAL_POSITION = (0, 0)  # Initial position of the agent
 INITIAL_HEALTH = 100  # Initial health of the agent
 GRID_DEFAULT_SIZE = 4  # Default grid size for the agent
 SCORE_PENALTY_MOVE = 10  # Score penalty for moving or turning
@@ -55,7 +54,7 @@ LOG_FILE_NAME = "actions.log"  # Log file name for actions
 class Agent:
     def __init__(
         self,
-        initial_position: Tuple[int, int] = INITIAL_POSITION,
+        initial_position: Tuple[int, int],
         health: int = INITIAL_HEALTH,
         grid_size: int = GRID_DEFAULT_SIZE,
     ):
@@ -66,13 +65,14 @@ class Agent:
         self.inference_engine = InferenceEngine(knowledge_base=self.knowledge_base)
 
         # Initial setup for the agent
+        self.start_position = initial_position  # Initial position of the agent
         self.position = initial_position  # Current position of the agent
         self.health = health  # Health of the agent
         self.grid_size = grid_size  # Size of the grid
         self.score = 0  # Score of the agent
         self.game_over = False  # Flag to indicate if the game is over
-        self.be_eaten = False # Flag to indicate if the agent is eater by th Wumpus
-        self.fall_down = False # Flag to indicate if the agent falls into a pit
+        self.be_eaten = False  # Flag to indicate if the agent is eater by th Wumpus
+        self.fall_down = False  # Flag to indicate if the agent falls into a pit
         self.game_won = False  # Flag to indicate if the game is won
         self.current_direction = Direction.NORTH  # Current direction of the agent
         self.current_percepts: Set[Percept] = set()  # Current percepts of the agent
@@ -139,7 +139,7 @@ class Agent:
         """
         if self.health == 0:
             self.game_over = True
-        
+
         return self.game_over
 
     def is_game_won(self) -> bool:
@@ -242,7 +242,7 @@ class Agent:
         Handle climbing action, mark game as won if agent is at the initial position
         """
         self.score += SCORE_REWARD_CLIMB
-        if self.position == INITIAL_POSITION:
+        if self.position == self.start_position:
             self.game_won = True
 
     def get_percept_string(self) -> str:
@@ -277,6 +277,7 @@ class Agent:
             self.grabbed_HP,
             self.visited,
             self.dangerous_cells,
+            self.start_position,
         )
 
     def _select_action(self, safe_moves: List[Tuple[int, int]]) -> str:
@@ -297,9 +298,20 @@ class Agent:
         for element, x, y in self.dangerous_cells:
             dangerous_cells.add((x, y))
         if len(self.visited.union(dangerous_cells)) == self.grid_size * self.grid_size:
-            nearest_unvisited_neighbor = (
-                (0, 1) if self._is_safe_move((0, 1)) else (1, 0)
+            adjacent_cells = get_adjacent_cells(
+                self.start_position[0], self.start_position[1], self.grid_size
             )
+
+            # Find the nearest and safe cell to move back
+            smallest_distance = float("inf")
+            for cell in adjacent_cells:
+                if self._is_safe_move(cell):
+                    distance = abs(cell[0] - self.position[0]) + abs(
+                        cell[1] - self.position[1]
+                    )
+                    if distance < smallest_distance:
+                        smallest_distance = distance
+                        nearest_unvisited_neighbor = cell
 
         else:
             nearest_unvisited_neighbor = self._find_nearest_unvisited_neighbor()
@@ -328,16 +340,19 @@ class Agent:
 
         self._move_to_position(next_position)
 
-        if next_position == INITIAL_POSITION:
+        if next_position == self.start_position:
             self.current_action.append(
-                (Action.CLIMB, INITIAL_POSITION[0], INITIAL_POSITION[1])
+                (Action.CLIMB, self.start_position[0], self.start_position[1])
             )
 
         return self.current_action
-    
+
     def _is_position_within_bounds(self, position):
         x, y = position
-        return 0 <= x < self.environment.get_map_size() and 0 <= y < self.environment.get_map_size()
+        return (
+            0 <= x < self.environment.get_map_size()
+            and 0 <= y < self.environment.get_map_size()
+        )
 
     def _move_to_position(self, next_position: Tuple[int, int], is_back: bool = False):
         """
