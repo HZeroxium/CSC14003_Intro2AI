@@ -373,12 +373,12 @@ class Agent:
             [(action, self.position[0], self.position[1]) for action in turn_actions]
         )
 
-    def log_actions(self):
+    def log_actions(self, output_file: str = LOG_FILE_NAME):
         """
         Write action to log file with format:
         (x, y): action_name
         """
-        with open(LOG_FILE_NAME, "a") as f:
+        with open(output_file, "a") as f:
             for action, x, y in self.current_action:
                 f.write(f"({x}, {y}): {action.name}\n")
 

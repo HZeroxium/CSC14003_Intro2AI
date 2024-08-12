@@ -1,10 +1,10 @@
 # File: ./src/game.py
 
-# This file contains the main game loop for a "Wumpus World" game using Pygame. 
-# It handles initializing the game environment, agent, and graphics; 
-# running the game loop to process user inputs and agent actions; 
-# and displaying the initial, ongoing, and final game screens. 
-# Key functionalities include setting up the environment and agent, managing game steps and delays, 
+# This file contains the main game loop for a "Wumpus World" game using Pygame.
+# It handles initializing the game environment, agent, and graphics;
+# running the game loop to process user inputs and agent actions;
+# and displaying the initial, ongoing, and final game screens.
+# Key functionalities include setting up the environment and agent, managing game steps and delays,
 # processing user inputs, updating the game state, and rendering graphics and user interface elements.
 
 # main.py
@@ -30,6 +30,7 @@ from environment import Environment
 from graphics_manager import GraphicsManager
 import time
 
+
 class Game:
     # Constants
     INITIAL_DELAY = 0.5  # Initial delay between steps in seconds
@@ -46,6 +47,9 @@ class Game:
     def __init__(self, map_file):
         pygame.init()
 
+        # Based on the input map file, create output file for actions
+        # Example: input/map1.txt -> output/result1.txt
+        self.output_file = map_file.replace("input", "output").replace("map", "result")
         # Set up environment and agent
         self.env = Environment(map_file)
         self.agent = Agent(
@@ -72,6 +76,9 @@ class Game:
     def run(self):
         self.display_initial_screen()
 
+        # Clear the output file
+        open(self.output_file, "w").close()
+
         while self.running and not (
             self.agent.is_game_over() or self.agent.is_game_won()
         ):
@@ -81,6 +88,10 @@ class Game:
 
             self.step += 1
             self.perform_step()
+
+        # Write final score to the output file
+        with open(self.output_file, "a") as file:
+            file.write(f"Final Score: {self.agent.score}\n")
 
         self.display_final_screen()
         self.wait_for_exit()
@@ -189,17 +200,24 @@ class Game:
 
         new_percept = self.env.update(self.agent, actions)
         self.agent.update_knowledge(new_percept)
-        self.agent.log_actions()
+        self.agent.log_actions(self.output_file)
 
         self.next_step = False
 
     def display_final_screen(self):
         """Display the final screen with the game result and an 'Exit' button."""
         final_message = (
-            "You won!" if self.agent.is_game_won()
-            else "You fell into a pit!" if self.agent.fall_down 
-            else "You are eaten by the Wumpus!" if self.agent.be_eaten 
-            else "You lose!"
+            "You won!"
+            if self.agent.is_game_won()
+            else (
+                "You fell into a pit!"
+                if self.agent.fall_down
+                else (
+                    "You are eaten by the Wumpus!"
+                    if self.agent.be_eaten
+                    else "You lose!"
+                )
+            )
         )
 
         self.screen.fill(GraphicsManager.BACKGROUND_COLOR)
