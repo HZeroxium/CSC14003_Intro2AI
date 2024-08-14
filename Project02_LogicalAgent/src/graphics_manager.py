@@ -83,6 +83,7 @@ class GraphicsManager:
         cls.SCREEN_WIDTH = cls.CELL_SIZE * grid_size + cls.INFO_PANEL_WIDTH
         cls.SCREEN_HEIGHT = cls.CELL_SIZE * grid_size
         cls.FONT_SIZE = cls.CELL_SIZE // cls.FONT_SIZE_DIVISOR
+        
 
     @staticmethod
     def draw_grid(env, agent, screen, font):
@@ -201,7 +202,8 @@ class GraphicsManager:
             )
 
         # Update info panel
-        GraphicsManager.INFO_PANEL.update_info_panel(screen, agent)
+        
+        GraphicsManager.INFO_PANEL.update_info_panel(screen, agent, GraphicsManager.CELL_SIZE)
 
     @staticmethod
     def draw_button(screen, text, pos, size, color=None):
