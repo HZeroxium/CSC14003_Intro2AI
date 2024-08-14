@@ -83,7 +83,7 @@ class GraphicsManager:
         cls.SCREEN_WIDTH = cls.CELL_SIZE * grid_size + cls.INFO_PANEL_WIDTH
         cls.SCREEN_HEIGHT = cls.CELL_SIZE * grid_size
         cls.FONT_SIZE = cls.CELL_SIZE // cls.FONT_SIZE_DIVISOR
-        
+
 
     @staticmethod
     def draw_grid(env, agent, screen, font):
@@ -115,14 +115,25 @@ class GraphicsManager:
                     (elem, row_index, col_index) in agent.dangerous_cells
                     for elem in [Element.PIT, Element.WUMPUS, Element.POISONOUS_GAS]
                 ):
-                    pygame.draw.rect(screen, GraphicsManager.RED, rect)
-                    GraphicsManager.draw_text(
-                        screen,
-                        env.cell_to_string(env.map[row_index][col_index]),
-                        rect,
-                        font,
-                    )
-
+                    # pygame.draw.rect(screen, GraphicsManager.RED, rect)
+                    # GraphicsManager.draw_text(
+                    #     screen,
+                    #     env.cell_to_string(env.map[row_index][col_index]),
+                    #     rect,
+                    #     font,
+                    # )
+                    image_path = "../data/image/AGENT.png"
+                    for content in env.cell_to_string(env.map[row_index][col_index]).split(', '):
+                        # Check if the cell content matches any predefined entities
+                        if content in {'W', 'P', 'PG'}:
+                            image_path = f"../data/image/{content}.png"
+                            break
+                    # Load and resize the selected image to fit the cell
+                    image = pygame.image.load(image_path)
+                    image = pygame.transform.scale(image, (rect.width, rect.height))
+                    
+                    # Draw the image onto the screen at the cell's position
+                    screen.blit(image, rect.topleft)                   
                 # Draw grid lines
                 pygame.draw.rect(
                     screen,
@@ -142,12 +153,14 @@ class GraphicsManager:
 
                 # Highlight agent's current position
                 if (row_index, col_index) == agent.position:
-                    pygame.draw.rect(
-                        screen,
-                        GraphicsManager.RED,
-                        rect,
-                        GraphicsManager.AGENT_HIGHLIGHT_THICKNESS,
-                    )
+                    image = pygame.image.load("../data/image/AGENT.PNG")
+
+                    # Resize the image to fit the cell size if necessary
+                    image = pygame.transform.scale(image, (rect.width, rect.height))
+                
+                    # Draw the image onto the cell
+                    screen.blit(image, rect.topleft)
+                    
 
     @staticmethod
     def draw_text(screen, text, rect, font):
@@ -157,7 +170,7 @@ class GraphicsManager:
         text_surface = font.render(text, True, GraphicsManager.TEXT_COLOR)
         text_rect = text_surface.get_rect(center=rect.center)
         screen.blit(text_surface, text_rect)
-
+        
     @staticmethod
     def draw_info_panel(
         agent, screen, font, env, current_position, previous_position, step_history
@@ -203,7 +216,7 @@ class GraphicsManager:
 
         # Update info panel
         
-        GraphicsManager.INFO_PANEL.update_info_panel(screen, agent, GraphicsManager.CELL_SIZE)
+        GraphicsManager.INFO_PANEL.update_info_panel(screen, agent)
 
     @staticmethod
     def draw_button(screen, text, pos, size, color=None):
