@@ -162,7 +162,7 @@ class Movements():
                 self.current_direction = (self.current_direction + 4 + 1) % 4
                 rotate_icon = pygame.image.load(f'../data/image/{a}.png')
                 screen.blit(rotate_icon, (30 * i + MOVEMENT_ICON_X_INDEX, MOVEMENT_ICON_Y_INDEX))
-            else:
+            elif a == 'GRAB':
                 grab_icon = pygame.image.load(f'../data/image/{a}.png')
                 screen.blit(grab_icon, (30 * i + MOVEMENT_ICON_X_INDEX, MOVEMENT_ICON_Y_INDEX))
 
