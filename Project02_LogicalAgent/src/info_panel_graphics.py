@@ -149,6 +149,8 @@ class Movements():
         }
 
         for i, a in enumerate(actions):
+            if a == 'CLIMB':
+                continue
             if a == 'FORWARD':
                 action_icon = pygame.image.load(f"../data/image/{forward_direction[a + "_" + self.direction[self.current_direction] ]}.png")
                 screen.blit(action_icon, (30 * i + MOVEMENT_ICON_X_INDEX, MOVEMENT_ICON_Y_INDEX))

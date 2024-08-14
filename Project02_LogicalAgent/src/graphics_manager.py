@@ -1,14 +1,14 @@
 # File: ./src/graphic_manager.py
 
-# This file manages the graphical components and user interface elements for the "Wumpus World" game using Pygame. 
-# It includes functionality for setting screen dimensions, drawing the game grid, rendering text, 
-# and displaying information panels. It also handles the creation and rendering of interactive buttons 
-# and other UI elements. Key components include methods for drawing the game grid, agent position, 
+# This file manages the graphical components and user interface elements for the "Wumpus World" game using Pygame.
+# It includes functionality for setting screen dimensions, drawing the game grid, rendering text,
+# and displaying information panels. It also handles the creation and rendering of interactive buttons
+# and other UI elements. Key components include methods for drawing the game grid, agent position,
 # and various game states, as well as an information panel displaying agent stats and step history.
 
 # main.py
-#     └─game.py 
-#           ├──agent.py 
+#     └─game.py
+#           ├──agent.py
 #           │      └──inference_engine.py
 #           │             ├── knowledge_base.py
 #           │             │       ├── utilities.py
@@ -56,7 +56,6 @@ class GraphicsManager:
     GREEN = (0, 255, 0)
     RED = (255, 0, 0)
     YELLOW = (255, 255, 0)
-
 
     # Button dimensions
     BUTTON_WIDTH = 150
@@ -170,24 +169,23 @@ class GraphicsManager:
             "Courier New", GraphicsManager.SMALL_FONT_SIZE
         )
 
-
-
         # List of informational text lines
         info_texts = [
-            f"   ", # Health bar
-            f"     {len(agent.grabbed_gold) * 5000}", # Gold
-            f"       {agent.get_score()}", # Score
-            f"        ", # Action + Direction
-            f"        ", # Action + Direction
+            f"   ",  # Health bar
+            f"     {len(agent.grabbed_gold) * 5000}",  # Gold
+            f"       {agent.get_score()}",  # Score
+            f"        ",  # Action + Direction
+            f"        ",  # Action + Direction
             f"Percepts: {agent.get_percept_string()}",
             f"Agent Position: {current_position}",
-            f"Previous Position: {previous_position}",
-            f"Visited Cells: {len(agent.visited)}",
-            f"Dangerous Cells: {len(agent.dangerous_cells)}",
+            # f"Previous Position: {previous_position}",
+            # f"Visited Cells: {len(agent.visited)}",
+            # f"Dangerous Cells: {len(agent.dangerous_cells)}",
         ]
 
         # Combine info texts with step history, displaying history in reverse order
-        display_texts = info_texts + step_history[::-1]
+        display_texts = info_texts
+        # display_texts.extend(reversed(step_history))
 
         # Render each line of text using the smaller monospace font
         for index, text in enumerate(display_texts):
@@ -204,7 +202,6 @@ class GraphicsManager:
 
         # Update info panel
         GraphicsManager.INFO_PANEL.update_info_panel(screen, agent)
-        
 
     @staticmethod
     def draw_button(screen, text, pos, size, color=None):
