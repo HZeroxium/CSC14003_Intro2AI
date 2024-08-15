@@ -1,14 +1,14 @@
 # File: ./src/Environment.py
 
-# This file defines the `Environment` class for the "Wumpus World" game. 
-# It manages the game map, loads map data from a file, and updates the state of the map based on the agent's actions. 
-# Key functionalities include initializing and loading the map, handling percepts and elements within the map, 
-# updating the map state based on the agent's movements and actions, and managing interactions with elements 
+# This file defines the `Environment` class for the "Wumpus World" game.
+# It manages the game map, loads map data from a file, and updates the state of the map based on the agent's actions.
+# Key functionalities include initializing and loading the map, handling percepts and elements within the map,
+# updating the map state based on the agent's movements and actions, and managing interactions with elements
 # like gold, healing potions, and dangers such as pits, Wumpus, and poisonous gas.
 
 # main.py
-#     └─game.py 
-#           ├──agent.py 
+#     └─game.py
+#           ├──agent.py
 #           │      └──inference_engine.py
 #           │             ├── knowledge_base.py
 #           │             │       ├── utilities.py
@@ -40,6 +40,7 @@ class Environment:
         self.map: List[List[Set[Enum]]] = []
         self.load_map(map_file)
         self.size = len(self.map)
+        self.output_map(map_file.replace("input", "output"))
         self.visited = [[False for _ in range(self.size)] for _ in range(self.size)]
 
     def cell_to_string(self, cell: Set[Enum]) -> str:
@@ -103,9 +104,11 @@ class Environment:
                 if Element.PIT in self.map[x][y]:
                     agent.game_over = True
                     agent.fall_down = True
+                    agent.score -= 10000
                     return
                 if Element.WUMPUS in self.map[x][y]:
                     agent.game_over = True
+                    agent.score -= 10000
                     agent.be_eaten = True
                     return
                 if Element.POISONOUS_GAS in self.map[x][y]:
@@ -143,21 +146,10 @@ class Environment:
             return Element.HEALING_POTION
         return None
 
-
-# Uncomment the following lines to enable running the script as a standalone application
-# def main():
-#     env = Environment("../data/input/map1.txt")
-#     pygame.init()
-#     screen = pygame.display.set_mode((env.size * CELL_SIZE, env.size * CELL_SIZE))
-#     pygame.display.set_caption("Wumpus World")
-#     env.draw_grid(screen)
-#     pygame.display.flip()
-
-#     running = True
-#     while running:
-#         for event in pygame.event.get():
-#             if event.type == pygame.QUIT:
-#                 running = False
-
-# if __name__ == "__main__":
-#     main()
+    def output_map(self, output_file: str):
+        with open(output_file, "w") as file:
+            file.write(str(self.size) + "\n")
+            for i in range(self.size):
+                for j in range(self.size):
+                    file.write(self.cell_to_string(self.map[i][j]) + ".")
+                file.write("\n")

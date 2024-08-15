@@ -54,7 +54,7 @@ class Info_Panel():
         self.gold = Gold()
         self.score = Score()
         self.movements = Movements()
-    
+
     def update_info_panel(self, screen, agent):
         self.health_bar.update_health_bar(screen, agent.health)
         self.gold.update_gold(screen, agent)
@@ -115,12 +115,10 @@ class Gold():
         if agent._is_gold(agent.position):
             monospace_font = pygame.font.SysFont("Courier New", 14)
             surface = monospace_font.render('+5000', True, GOLD)
-            
             screen.blit(surface, (GOLD_ICON_X_INDEX + (60 if len(agent.grabbed_gold) == 0 else
                                                        80 if len(agent.grabbed_gold) * 5000 <= 5000 
                                                        else 100),
                                   GOLD_ICON_Y_INDEX + 5))
-            
 
 class Score():
     def __init__(self) -> None:

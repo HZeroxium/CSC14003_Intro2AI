@@ -32,7 +32,7 @@ class GraphicsManager:
     # Constants for grid and cell configuration
     MIN_CELL_SIZE = 50
     MAX_CELL_SIZE = 100
-    INFO_PANEL_WIDTH = 700
+    INFO_PANEL_WIDTH = 500
     SCREEN_CALC_DIVISOR = 700  # Divisor to calculate cell size
     FONT_SIZE_DIVISOR = 4  # Divisor to calculate font size from cell size
 
@@ -69,6 +69,10 @@ class GraphicsManager:
     # Test graphic
     INFO_PANEL = Info_Panel()
 
+    CELL_SIZE = 80
+    SCREEN_WIDTH = 1200
+    SCREEN_HEIGHT = 800
+
     @classmethod
     def set_dimensions(cls, grid_size):
         """
@@ -83,7 +87,6 @@ class GraphicsManager:
         cls.SCREEN_WIDTH = cls.CELL_SIZE * grid_size + cls.INFO_PANEL_WIDTH
         cls.SCREEN_HEIGHT = cls.CELL_SIZE * grid_size
         cls.FONT_SIZE = cls.CELL_SIZE // cls.FONT_SIZE_DIVISOR
-
 
     @staticmethod
     def draw_grid(env, agent, screen, font):
@@ -123,17 +126,19 @@ class GraphicsManager:
                     #     font,
                     # )
                     image_path = "../data/image/AGENT.png"
-                    for content in env.cell_to_string(env.map[row_index][col_index]).split(', '):
+                    for content in env.cell_to_string(
+                        env.map[row_index][col_index]
+                    ).split(", "):
                         # Check if the cell content matches any predefined entities
-                        if content in {'W', 'P', 'PG'}:
+                        if content in {"W", "P", "PG"}:
                             image_path = f"../data/image/{content}.png"
                             break
                     # Load and resize the selected image to fit the cell
                     image = pygame.image.load(image_path)
                     image = pygame.transform.scale(image, (rect.width, rect.height))
-                    
+
                     # Draw the image onto the screen at the cell's position
-                    screen.blit(image, rect.topleft)                   
+                    screen.blit(image, rect.topleft)
                 # Draw grid lines
                 pygame.draw.rect(
                     screen,
@@ -143,7 +148,9 @@ class GraphicsManager:
                 )
 
                 # Render text for visited cells
-                if (row_index, col_index) in agent.visited and env.cell_to_string(env.map[row_index][col_index]) not in ['W', 'P', 'PG']:
+                if (row_index, col_index) in agent.visited and env.cell_to_string(
+                    env.map[row_index][col_index]
+                ) not in ["W", "P", "PG"]:
                     GraphicsManager.draw_text(
                         screen,
                         env.cell_to_string(env.map[row_index][col_index]),
@@ -157,10 +164,9 @@ class GraphicsManager:
 
                     # Resize the image to fit the cell size if necessary
                     image = pygame.transform.scale(image, (rect.width, rect.height))
-                
+
                     # Draw the image onto the cell
                     screen.blit(image, rect.topleft)
-                    
 
     @staticmethod
     def draw_text(screen, text, rect, font):
@@ -170,7 +176,7 @@ class GraphicsManager:
         text_surface = font.render(text, True, GraphicsManager.TEXT_COLOR)
         text_rect = text_surface.get_rect(center=rect.center)
         screen.blit(text_surface, text_rect)
-        
+
     @staticmethod
     def draw_info_panel(
         agent, screen, font, env, current_position, previous_position, step_history
@@ -180,7 +186,7 @@ class GraphicsManager:
         """
         # Use a smaller monospace font for consistent character width
         monospace_font = pygame.font.SysFont(
-            "Courier New", GraphicsManager.SMALL_FONT_SIZE
+            "Courier New", GraphicsManager.BASE_FONT_SIZE
         )
 
         # List of informational text lines
@@ -192,6 +198,7 @@ class GraphicsManager:
             f"        ",  # Action + Direction
             f"Percepts: {agent.get_percept_string()}",
             f"Agent Position: {current_position}",
+            f"Agent Direction: {agent.current_direction}",
             # f"Previous Position: {previous_position}",
             # f"Visited Cells: {len(agent.visited)}",
             # f"Dangerous Cells: {len(agent.dangerous_cells)}",
@@ -215,7 +222,7 @@ class GraphicsManager:
             )
 
         # Update info panel
-        
+
         GraphicsManager.INFO_PANEL.update_info_panel(screen, agent)
 
     @staticmethod

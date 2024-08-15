@@ -315,12 +315,12 @@ class Agent:
 
         else:
             nearest_unvisited_neighbor = self._find_nearest_unvisited_neighbor()
-            print("Nearest unvisited neighbor:", nearest_unvisited_neighbor)
+            # print("Nearest unvisited neighbor:", nearest_unvisited_neighbor)
         if nearest_unvisited_neighbor is None:
             next_position = self.parent[self.position]
         else:
             path = self._find_path_to_safe_cell_near(nearest_unvisited_neighbor)
-            print("Path to", nearest_unvisited_neighbor, ":", path)
+            # print("Path to", nearest_unvisited_neighbor, ":", path)
             next_position = path[1] if len(path) > 1 else path[0]
 
         if self.inference_engine.infer_gold(self.position):
