@@ -235,6 +235,20 @@ class Game:
             # self.font=pygame.font.SysFont(Game.FONT_SIZE, Game.FINAL_MESSAGE_FONT_SIZE),
         )
 
+        """Display the final screen with the game result and an 'Exit' button."""
+        if self.agent.is_game_won():
+            final_image = pygame.image.load('../data/image/you_win.png')
+        else:
+            final_image = pygame.image.load('../data/image/game_over.png')
+
+        final_image = pygame.transform.scale(
+        final_image,
+        (GraphicsManager.SCREEN_WIDTH // 4, GraphicsManager.SCREEN_HEIGHT // 4)
+    )
+
+        self.screen.fill(GraphicsManager.BACKGROUND_COLOR)
+        self.screen.blit(final_image, (525, 100))
+
         exit_color = (
             Game.BUTTON_EXIT_WIN_COLOR
             if self.agent.is_game_won()

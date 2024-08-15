@@ -143,7 +143,7 @@ class GraphicsManager:
                 )
 
                 # Render text for visited cells
-                if (row_index, col_index) in agent.visited:
+                if (row_index, col_index) in agent.visited and env.cell_to_string(env.map[row_index][col_index]) not in ['W', 'P', 'PG']:
                     GraphicsManager.draw_text(
                         screen,
                         env.cell_to_string(env.map[row_index][col_index]),
