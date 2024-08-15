@@ -1,0 +1,11 @@
+10
+.S.GL.G.GL.....S.
+S.W.S.GL.....WF, S.W.
+GL.S..HP....WF, S.PG.WF, S.
+G.GL..GL...S.W.WF, S..
+GL..GL.G.GL...HP, S...
+WF...GL.GL, A......
+PG.WF..GL.G.GL.B...GL.
+WF....GL.B.P, S.B.GL.G.
+..B...S.B, W.GL, S..GL, S.
+.B.P.B...GL, S.G.GL, S.W.
