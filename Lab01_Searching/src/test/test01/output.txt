@@ -1,0 +1,35 @@
+BFS:
+Path: 0 -> 2 -> 4
+Time: 0.0015044212341308594 seconds
+Memory: 1.7578125 KB
+
+DFS:
+Path: 0 -> 1 -> 2 -> 4
+Time: 0.0 seconds
+Memory: 0.5703125 KB
+
+UCS:
+Path: 0 -> 2 -> 4
+Time: 0.0 seconds
+Memory: 0.4296875 KB
+
+IDS:
+Path: 0 -> 2 -> 4
+Time: 0.0 seconds
+Memory: 0.4609375 KB
+
+GBFS:
+Path: 0 -> 2 -> 4
+Time: 0.0 seconds
+Memory: 0.4453125 KB
+
+A*:
+Path: 0 -> 2 -> 4
+Time: 0.0 seconds
+Memory: 0.6015625 KB
+
+Hill-climbing:
+Path: 0 -> 2 -> 4
+Time: 0.0 seconds
+Memory: 0.296875 KB
+

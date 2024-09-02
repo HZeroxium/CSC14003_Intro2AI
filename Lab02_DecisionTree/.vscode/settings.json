@@ -1,0 +1,19 @@
+{
+  "files.exclude": {
+    "**/.git": true,
+    "**/.svn": true,
+    "**/.hg": true,
+    "**/CVS": true,
+    "**/.DS_Store": true,
+    "**/Thumbs.db": true,
+    "decision_trees_split": true
+  },
+  "hide-files.files": [
+    "decision_trees_split"
+  ],
+  "cSpell.words": [
+    "graphviz",
+    "ucimlrepo",
+    "ucirepo"
+  ]
+}
